@@ -47,6 +47,7 @@ $fields = [
     'submissionDate'     => '',
     'generatedSubject'   => '',
     'screenshotBase64'   => '',
+    'fileName'           => '',
     'question1'          => '',
     'answer1'            => '',
     'question2'          => '',

@@ -199,7 +199,8 @@ const FormHandler = (() => {
                 formType: 'Support_Ticket',
                 submissionDate: new Date().toISOString(),
                 generatedSubject: currentAnalysis ? currentAnalysis.subject : '',
-                screenshotBase64: '',
+                screenshotBase64: FileHandler.getBase64(),
+                fileName: FileHandler.getFileName(),
 
                 question1: qa.question1,
                 answer1: qa.answer1,

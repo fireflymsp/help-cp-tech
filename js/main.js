@@ -59,6 +59,7 @@
         parseURLParams();
         bindEvents();
         FormHandler.initLiveValidation();
+        FileHandler.init();
         UIManager.initModal();
         UIManager.initPriorityButtons();
     }

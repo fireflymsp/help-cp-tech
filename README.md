@@ -27,6 +27,7 @@ This app intentionally uses a simple stack (no framework) for fast load times an
 │   ├── main.js                     # Initialization, URL params, event binding
 │   ├── form-handler.js             # Validation, stage navigation, submission
 │   ├── ai-integration.js           # Claude API communication
+│   ├── file-handler.js             # Drag-and-drop / browse file attachment
 │   └── ui-manager.js               # Modals, priority UI, proxy detection UI
 ├── index.html                      # Single-page app (form → summary → confirm)
 ├── styles.css                      # Full brand stylesheet
@@ -92,6 +93,10 @@ Deployed via GitHub Actions on push to `main`. The workflow uses OIDC authentica
 ## Webhook Payload
 
 Submitted as `application/x-www-form-urlencoded` to the Rewst webhook. All fields are always present (empty string if unused). See `submit-ticket.php` for the complete field list.
+
+## File Attachments
+
+Users can attach a single file (any type, up to 10 MB) via drag-and-drop or browse. The file is converted to Base64 client-side and sent in the `screenshotBase64` webhook field. The original file name is sent in the `fileName` field.
 
 ## Brand Guidelines
 
