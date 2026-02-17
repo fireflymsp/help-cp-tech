@@ -75,17 +75,13 @@ if (empty($payload['submissionDate'])) {
     $payload['submissionDate'] = gmdate('Y-m-d\TH:i:s.v\Z');
 }
 
-// Send to Rewst as application/x-www-form-urlencoded (NOT JSON — Rewst double-encodes JSON)
-$post_body = http_build_query($payload);
-
+// Send to Rewst as multipart/form-data (matching browser native form POST behavior)
+// Passing an array to CURLOPT_POSTFIELDS makes curl send as multipart/form-data automatically
 $ch = curl_init($webhook_url);
 curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_POST           => true,
-    CURLOPT_POSTFIELDS     => $post_body,
-    CURLOPT_HTTPHEADER     => [
-        'Content-Type: application/x-www-form-urlencoded',
-    ],
+    CURLOPT_POSTFIELDS     => $payload,  // array = multipart/form-data
     CURLOPT_TIMEOUT        => 30,
     CURLOPT_CONNECTTIMEOUT => 10,
 ]);
