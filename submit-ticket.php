@@ -76,6 +76,23 @@ if (empty($payload['submissionDate'])) {
     $payload['submissionDate'] = gmdate('Y-m-d\TH:i:s.v\Z');
 }
 
+// --- Spam Detection (AI-powered) ---
+// Runs on every submission regardless of AI review toggle.
+// Fails open — if the check errors out, the ticket is allowed through.
+$api_key = getenv('ANTHROPIC_API_KEY');
+if (!empty($api_key)) {
+    $spam_result = checkForSpam($payload, $api_key);
+    if ($spam_result === 'spam') {
+        error_log('CPHELP: Spam blocked — name=' . $payload['fullName'] . ', company=' . $payload['companyName'] . ', email=' . $payload['email']);
+        http_response_code(422);
+        echo json_encode([
+            'error' => 'spam_detected',
+            'message' => 'Your submission could not be processed. If this is a legitimate request, please call us at 866.933.4359.',
+        ]);
+        exit;
+    }
+}
+
 // Send to Rewst as application/x-www-form-urlencoded (NOT JSON — Rewst double-encodes JSON)
 $post_body = http_build_query($payload);
 
@@ -113,3 +130,63 @@ if ($http_code < 200 || $http_code >= 300) {
 
 // Success
 echo json_encode(['success' => true, 'message' => 'Ticket submitted successfully']);
+
+// --- Spam Detection Function ---
+
+/**
+ * Call Claude to determine if a ticket submission is spam.
+ * Returns 'spam', 'legitimate', or 'error' (fail-open).
+ *
+ * @param array  $payload  The ticket payload
+ * @param string $api_key  Anthropic API key
+ * @return string 'spam' | 'legitimate' | 'error'
+ */
+function checkForSpam(array $payload, string $api_key): string {
+    $content = "Name: {$payload['fullName']}\n"
+             . "Company: {$payload['companyName']}\n"
+             . "Email: {$payload['email']}\n"
+             . "Phone: {$payload['phone']}\n"
+             . "Issue: {$payload['notes']}";
+
+    $body = json_encode([
+        'model'      => 'claude-sonnet-4-5-20250929',
+        'max_tokens' => 20,
+        'temperature' => 0,
+        'system'     => 'You are a spam detector for an IT support helpdesk form used by managed IT clients. '
+                      . 'Real tickets describe computer, network, phone, printer, software, or account issues. '
+                      . 'Spam includes: SEO pitches, marketing offers, sales outreach, crypto/investment schemes, '
+                      . 'nonsense/gibberish, bot-generated text, phishing attempts, or anything unrelated to IT support. '
+                      . 'Respond with exactly one word: "spam" or "legitimate". Nothing else.',
+        'messages'   => [
+            ['role' => 'user', 'content' => $content],
+        ],
+    ]);
+
+    $ch = curl_init('https://api.anthropic.com/v1/messages');
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST           => true,
+        CURLOPT_POSTFIELDS     => $body,
+        CURLOPT_HTTPHEADER     => [
+            'Content-Type: application/json',
+            'x-api-key: ' . $api_key,
+            'anthropic-version: 2023-06-01',
+        ],
+        CURLOPT_TIMEOUT        => 10,
+        CURLOPT_CONNECTTIMEOUT => 5,
+    ]);
+
+    $response = curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($http_code !== 200 || $response === false) {
+        error_log('CPHELP: Spam check failed (HTTP ' . $http_code . ') — allowing ticket through');
+        return 'error';
+    }
+
+    $data = json_decode($response, true);
+    $verdict = strtolower(trim($data['content'][0]['text'] ?? ''));
+
+    return ($verdict === 'spam') ? 'spam' : 'legitimate';
+}

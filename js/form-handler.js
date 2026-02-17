@@ -229,7 +229,13 @@ const FormHandler = (() => {
                 body: JSON.stringify(payload)
             });
 
+            const result = await response.json();
+
             if (!response.ok) {
+                if (result.error === 'spam_detected') {
+                    alert('Your submission could not be processed. If this is a legitimate request, please call us at 866.933.4359 for immediate help.');
+                    return;
+                }
                 throw new Error(`Submission failed: ${response.status}`);
             }
 
