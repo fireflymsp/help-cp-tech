@@ -1,10 +1,13 @@
 /**
- * AI Integration — handles communication with the Claude API backend
+ * @module AIIntegration
+ * @description Handles communication with the Claude API backend (generate-questions.php).
+ * Provides structured AI analysis of support issues including subject, priority,
+ * follow-up questions, and proxy detection.
  */
 const AIIntegration = (() => {
     'use strict';
 
-    // Default fallback response when AI is disabled or fails
+    /** @type {Object} Default fallback response when AI is disabled or fails */
     const DEFAULT_RESPONSE = {
         subject: '',
         priority: 'Normal',
@@ -16,9 +19,10 @@ const AIIntegration = (() => {
     /**
      * Send the issue description to the backend for Claude analysis.
      * Returns a structured response with subject, priority, questions, and proxy flag.
+     * Falls back to DEFAULT_RESPONSE on any error (graceful degradation).
      *
      * @param {string} issueDescription - The user's issue text
-     * @returns {Promise<Object>} AI analysis result
+     * @returns {Promise<{ subject: string, priority: string, reason: string, questions: string[], proxy_detected: boolean }>}
      */
     async function analyzeIssue(issueDescription) {
         try {
@@ -44,7 +48,10 @@ const AIIntegration = (() => {
 
     /**
      * Validate and normalize the AI response structure.
-     * Ensures all expected fields exist with correct types.
+     * Ensures all expected fields exist with correct types and values.
+     *
+     * @param {Object} data - Raw response from the backend
+     * @returns {{ subject: string, priority: string, reason: string, questions: string[], proxy_detected: boolean }}
      */
     function validateResponse(data) {
         return {
@@ -57,7 +64,8 @@ const AIIntegration = (() => {
     }
 
     /**
-     * Get the default response (for when AI is disabled)
+     * Get the default response (used when AI review is disabled by the user).
+     * @returns {{ subject: string, priority: string, reason: string, questions: string[], proxy_detected: boolean }}
      */
     function getDefaultResponse() {
         return { ...DEFAULT_RESPONSE };

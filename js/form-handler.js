@@ -1,14 +1,18 @@
 /**
- * Form Handler — validation, stage navigation, and ticket submission
+ * @module FormHandler
+ * @description Handles form validation, stage navigation, and ticket submission.
+ * Orchestrates the flow between the intake form, AI analysis, summary review,
+ * and final submission to the Rewst webhook via submit-ticket.php.
  */
 const FormHandler = (() => {
     'use strict';
 
-    // Current AI analysis result (set after "Next" is clicked)
+    /** @type {Object|null} Current AI analysis result (set after "Next" is clicked) */
     let currentAnalysis = null;
 
     /**
-     * Validate the intake form. Returns true if valid.
+     * Validate the intake form fields. Shows inline errors and focuses the first invalid field.
+     * @returns {boolean} True if all required fields are valid
      */
     function validateForm() {
         let valid = true;
@@ -25,7 +29,6 @@ const FormHandler = (() => {
             const error = document.getElementById(`${id}-error`);
             const value = input.value.trim();
 
-            // Special validation for email
             if (id === 'email' && value && !isValidEmail(value)) {
                 input.classList.add('error');
                 error.textContent = 'Please enter a valid email address';
@@ -43,7 +46,6 @@ const FormHandler = (() => {
             }
         });
 
-        // Focus the first error field
         if (!valid) {
             const firstError = document.querySelector('input.error, textarea.error');
             if (firstError) firstError.focus();
@@ -52,12 +54,17 @@ const FormHandler = (() => {
         return valid;
     }
 
+    /**
+     * Basic email format validation.
+     * @param {string} email - Email address to validate
+     * @returns {boolean} True if the email format is valid
+     */
     function isValidEmail(email) {
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     }
 
     /**
-     * Clear validation errors on input
+     * Attach input event listeners to clear validation errors as the user types.
      */
     function initLiveValidation() {
         const fields = ['fullName', 'companyName', 'email', 'phone', 'notes'];
@@ -71,7 +78,8 @@ const FormHandler = (() => {
     }
 
     /**
-     * Gather form data from the intake form
+     * Gather all form data from the intake form inputs.
+     * @returns {{ fullName: string, companyName: string, email: string, phone: string, notes: string, computerName: string, userName: string, aiReviewEnabled: boolean }}
      */
     function getFormData() {
         return {
@@ -88,7 +96,9 @@ const FormHandler = (() => {
 
     /**
      * Handle the "Next" button click.
-     * Validates, optionally calls AI, then transitions to summary stage.
+     * Validates the form, optionally calls the AI for analysis,
+     * populates the summary stage, and transitions to it.
+     * Falls back to defaults on any error (graceful degradation).
      */
     async function handleNext() {
         if (!validateForm()) return;
@@ -100,21 +110,17 @@ const FormHandler = (() => {
 
         try {
             if (formData.aiReviewEnabled) {
-                // Call AI for analysis
                 currentAnalysis = await AIIntegration.analyzeIssue(formData.notes);
             } else {
-                // Skip AI — use defaults
                 currentAnalysis = AIIntegration.getDefaultResponse();
             }
 
-            // Populate the summary stage
             UIManager.populateSummary(formData);
             UIManager.showSubject(currentAnalysis.subject);
             UIManager.showPriority(currentAnalysis.priority, currentAnalysis.reason);
             UIManager.showQuestions(currentAnalysis.questions);
             UIManager.showProxy(currentAnalysis.proxy_detected);
 
-            // Show/hide subject card based on AI
             if (!formData.aiReviewEnabled) {
                 document.getElementById('subject-card').classList.add('hidden');
                 document.getElementById('priority-card').classList.add('hidden');
@@ -127,7 +133,6 @@ const FormHandler = (() => {
 
         } catch (error) {
             console.error('Error during Next:', error);
-            // Graceful degradation — show summary with defaults
             currentAnalysis = AIIntegration.getDefaultResponse();
             UIManager.populateSummary(formData);
             UIManager.showSubject('');
@@ -141,7 +146,7 @@ const FormHandler = (() => {
     }
 
     /**
-     * Handle the "Back to Edit" button
+     * Handle the "Back to Edit" button — returns to the intake form stage.
      */
     function handleBack() {
         UIManager.showStage('stage-form');
@@ -149,7 +154,8 @@ const FormHandler = (() => {
 
     /**
      * Handle the "Submit Ticket" button.
-     * Gathers all data and sends to the Rewst webhook via PHP backend.
+     * Gathers all data (form fields, AI analysis, priority confirmation,
+     * question answers, proxy info) and sends to the Rewst webhook via submit-ticket.php.
      */
     async function handleSubmit() {
         const submitBtn = document.getElementById('btn-submit');
@@ -169,7 +175,6 @@ const FormHandler = (() => {
                 };
             }
 
-            // Build urgency level string
             const urgencyLevel = `${priorityInfo.level}: ${currentAnalysis ? currentAnalysis.reason : 'Standard support request'}`;
 
             // Collect question answers
@@ -182,7 +187,8 @@ const FormHandler = (() => {
                 ? UIManager.getProxyInfo()
                 : { proxyInfo: '', actualUserName: '', actualUserCompany: '', actualUserEmail: '', actualUserPhone: '' };
 
-            // Build the full payload
+            // Build the complete webhook payload
+            /** @see submit-ticket.php for full field documentation */
             const payload = {
                 fullName: formData.fullName,
                 companyName: formData.companyName,
@@ -216,7 +222,6 @@ const FormHandler = (() => {
                 actualUserPhone: proxyData.actualUserPhone,
             };
 
-            // Send to backend
             const response = await fetch('/submit-ticket.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -227,7 +232,6 @@ const FormHandler = (() => {
                 throw new Error(`Submission failed: ${response.status}`);
             }
 
-            // Success — show confirmation
             UIManager.showConfirmation(formData.fullName);
 
         } catch (error) {
