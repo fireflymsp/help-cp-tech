@@ -1,243 +1,176 @@
 <?php
-// Enable error reporting for debugging
-error_reporting(E_ALL);
-ini_set('display_errors', 0);
-ini_set('log_errors', 1);
+/**
+ * generate-questions.php
+ *
+ * Backend endpoint that sends the user's issue description to Claude (Anthropic API)
+ * and returns a structured JSON response with subject, priority, questions, and proxy flag.
+ *
+ * Environment Variables Required:
+ *   ANTHROPIC_API_KEY — Your Anthropic API key
+ */
 
-// PERFORMANCE OPTIMIZATIONS:
-// - Reduced cURL timeout from 30s to 10s for better responsiveness
-// - Added connection timeout of 5s to prevent hanging
-// - Implemented intelligent fallback system for improved reliability
-// - Graceful degradation with user-friendly error messages
-
-// Start error logging
-error_log('=== generate-questions.php started ===');
-
-// Secure OpenAI API proxy - API key is stored server-side
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST');
-header('Access-Control-Allow-Headers: Content-Type');
+header('X-Content-Type-Options: nosniff');
 
-// Only allow POST requests
+// Only accept POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['error' => 'Method not allowed']);
     exit;
 }
 
-// Basic test to ensure script is running
-error_log('generate-questions.php script started successfully');
-
-// Get the request data
-error_log('Reading input data...');
-$raw_input = file_get_contents('php://input');
-
-// Check if raw input is empty
-if (empty($raw_input)) {
-    error_log('Empty input received');
-    http_response_code(400);
-    echo json_encode(['error' => 'No input data received']);
-    exit;
-}
-
-$input = json_decode($raw_input, true);
-
-// Validate that input is not null and is a valid array
-if ($input === null || !is_array($input)) {
-    error_log('Invalid JSON input received - json_decode returned: ' . var_export($input, true));
-    http_response_code(400);
-    echo json_encode(['error' => 'Invalid JSON input']);
-    exit;
-}
-
-$notes = $input['notes'] ?? '';
-
-// Validate and sanitize the notes input
-if (!is_string($notes)) {
-    error_log('Invalid notes input - not a string');
-    http_response_code(400);
-    echo json_encode(['error' => 'Invalid notes input']);
-    exit;
-}
-
-// Check length limits (reasonable for support ticket descriptions)
-if (strlen($notes) > 2000) {
-    error_log('Notes input too long: ' . strlen($notes) . ' characters');
-    http_response_code(400);
-    echo json_encode(['error' => 'Notes too long - please keep under 2000 characters']);
-    exit;
-}
-
-if (strlen($notes) < 10) {
-    error_log('Notes input too short: ' . strlen($notes) . ' characters');
-    http_response_code(400);
-    echo json_encode(['error' => 'Notes too short - please provide more details (minimum 10 characters)']);
-    exit;
-}
-
-// Sanitize the notes input
-$notes = htmlspecialchars($notes, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-$notes = trim($notes);
-
-// Additional validation - check for potentially harmful content
-if (preg_match('/<script|javascript:|vbscript:|onload=|onerror=/i', $notes)) {
-    error_log('Potentially harmful content detected in notes');
-    http_response_code(400);
-    echo json_encode(['error' => 'Invalid content detected in notes']);
-    exit;
-}
-
-// Log the sanitized notes for debugging
-error_log("AI Request Notes (sanitized): " . $notes);
-
-if (empty($notes)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Notes are required']);
-    exit;
-}
-
-// Access your credentials directly (Azure App Service handles the loading)
-$AZURE_OPENAI_ENDPOINT = getenv('AZURE_OPENAI_ENDPOINT');
-$AZURE_OPENAI_API_KEY = getenv('AZURE_OPENAI_API_KEY');
-$AZURE_OPENAI_DEPLOYMENT_NAME = getenv('AZURE_OPENAI_DEPLOYMENT_NAME') ?: 'gpt-4';
-$OPENAI_API_KEY = getenv('OPENAI_API_KEY');
-$WEBHOOK_URL = getenv('WEBHOOK_URL');
-
-error_log('Configuration loaded from Azure App Service');
-error_log('Azure OpenAI Endpoint found: ' . (empty($AZURE_OPENAI_ENDPOINT) ? 'NO' : 'YES'));
-error_log('Azure OpenAI API Key found: ' . (empty($AZURE_OPENAI_API_KEY) ? 'NO' : 'YES'));
-error_log('Azure OpenAI Deployment found: ' . (empty($AZURE_OPENAI_DEPLOYMENT_NAME) ? 'NO' : 'YES'));
-error_log('OpenAI API Key found: ' . (empty($OPENAI_API_KEY) ? 'NO' : 'YES'));
-error_log('Webhook found: ' . (empty($WEBHOOK_URL) ? 'NO' : 'YES'));
-
-// Determine which service to use (Azure OpenAI preferred, fallback to OpenAI)
-$use_azure_openai = !empty($AZURE_OPENAI_ENDPOINT) && !empty($AZURE_OPENAI_API_KEY);
-$use_openai = !empty($OPENAI_API_KEY);
-
-if (!$use_azure_openai && !$use_openai) {
-    error_log('No AI service configuration found');
-    http_response_code(500);
-    echo json_encode(['error' => 'AI service configuration error - no API keys found']);
-    exit;
-}
-
-// Log which service will be used
-if ($use_azure_openai) {
-    error_log('Using Azure OpenAI Service');
-} else {
-    error_log('Using OpenAI API (fallback)');
-}
-
-// Prepare the AI request data
-$ai_data = [
-    'model' => $use_azure_openai ? $AZURE_OPENAI_DEPLOYMENT_NAME : 'gpt-4o',
-    'messages' => [
-        [
-            'role' => 'system',
-            'content' => "You are a helpful IT support specialist. First, generate a clear subject line, then assess urgency, then generate questions.\n\nRESPONSE FORMAT:\nFirst line: SUBJECT: [Clear, concise subject line based on the issue]\nSecond line: URGENCY: [HIGH/MEDIUM/LOW]\nThird line: REASON: [Brief explanation]\n\nThen provide up to 2 questions that you are highly confident will help solve the issue more expeditiously. Only ask questions that are essential for understanding and resolving the problem.\n\nURGENCY ASSESSMENT:\n- HIGH: Business-critical, security issues, system down, data loss, urgent deadlines, MULTIPLE USERS AFFECTED, revenue impact, customer-facing issues\n- MEDIUM: Work disruption, productivity impact, single user affected, non-critical systems\n- LOW: Minor inconvenience, non-critical features, personal preference, cosmetic issues\n\nIMPORTANT: Ask ONLY about things the user can actually observe or experience directly. DO NOT ask them to diagnose technical issues, assess signal strength, check settings, or perform technical troubleshooting.\n\nFocus on:\n- When things started happening\n- What they see on their screen\n- What they're trying to do\n- What happens when they try\n- Whether it works in other locations\n- Whether other people have the same issue\n- For HIGH urgency: What is the business impact? (deadlines, customers, revenue, etc.)\n\nUse plain, everyday language. Do NOT include any statements, apologies, or explanatory text - ONLY the subject, urgency assessment, and numbered questions.\n\nCRITICAL: You must follow this EXACT format with no additional text:\nSUBJECT: [subject]\nURGENCY: [urgency]\nREASON: [reason]\n1. [question]\n2. [question]"
-        ],
-        [
-            'role' => 'user',
-            'content' => "Based on this problem description, what questions might help us understand the issue better? 
-
-IMPORTANT: Generate up to 2 questions that you are highly confident will help solve the issue more expeditiously. Only ask questions that are essential for understanding and resolving the problem.
-
-Problem description: {$notes}"
-        ]
-    ],
-    'max_tokens' => 400,
-    'temperature' => 0.3
+// Default response for graceful degradation
+$default_response = [
+    'subject'        => '',
+    'priority'       => 'Normal',
+    'reason'         => 'Standard support request',
+    'questions'      => [],
+    'proxy_detected' => false,
 ];
 
-// Determine the API endpoint and headers
-if ($use_azure_openai) {
-    $api_url = rtrim($AZURE_OPENAI_ENDPOINT, '/') . '/openai/deployments/' . $AZURE_OPENAI_DEPLOYMENT_NAME . '/chat/completions?api-version=2024-12-01-preview';
-    $api_headers = [
-        'api-key: ' . $AZURE_OPENAI_API_KEY,
-        'Content-Type: application/json'
-    ];
-} else {
-    $api_url = 'https://api.openai.com/v1/chat/completions';
-    $api_headers = [
-        'Authorization: Bearer ' . $OPENAI_API_KEY,
-        'Content-Type: application/json'
-    ];
-}
+// Read and validate input
+$input = json_decode(file_get_contents('php://input'), true);
+$issue = trim($input['issue'] ?? '');
 
-// Make the AI API call with improved responsiveness
-$response = '';
-$http_code = 0;
-$use_fallback = false;
-
-if (function_exists('curl_init')) {
-    // Use cURL with reduced timeout for better responsiveness
-    error_log('Using cURL for API request with optimized timeout...');
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $api_url);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, $api_headers);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($ai_data));
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 10); // Reduced from 30 to 10 seconds for better responsiveness
-    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5); // Connection timeout of 5 seconds
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-    
-    // Execute the cURL request and handle potential errors including timeouts
-    $response = curl_exec($ch);
-    $curl_errno = curl_errno($ch);
-    $curl_error = curl_error($ch);
-    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-    
-    if ($curl_errno === CURLE_OPERATION_TIMEDOUT) {
-        error_log('cURL timeout detected, attempting fallback...');
-        $use_fallback = true;
-    } elseif ($response === false) {
-        error_log('cURL error detected, attempting fallback...');
-        $use_fallback = true;
-    }
-} else {
-    $use_fallback = true;
-}
-
-// Fallback logic for better reliability
-if ($use_fallback) {
-    error_log('Using fallback method for API request...');
-    
-    // Try file_get_contents with reduced timeout
-    $context = stream_context_create([
-        'http' => [
-            'method' => 'POST',
-            'header' => implode("\r\n", $api_headers) . "\r\nUser-Agent: PHP/AI-Client",
-            'content' => json_encode($ai_data),
-            'timeout' => 8 // Reduced timeout for fallback
-        ]
-    ]);
-    
-    $response = file_get_contents($api_url, false, $context);
-    
-    if ($response === false) {
-        // If both methods fail, return a user-friendly error with retry suggestion
-        http_response_code(503);
-        echo json_encode([
-            'error' => 'AI service temporarily unavailable',
-            'message' => 'Please try again in a moment. If the issue persists, contact support.',
-            'retry_after' => 30
-        ]);
-        exit;
-    }
-    
-    // file_get_contents() doesn't return HTTP status, assume success if we got a response
-    $http_code = 200;
-}
-
-if ($http_code !== 200) {
-    http_response_code($http_code);
-    echo json_encode(['error' => 'AI API error', 'status' => $http_code, 'response' => $response]);
+if (empty($issue)) {
+    echo json_encode($default_response);
     exit;
 }
 
-// Return the AI response
-echo $response;
-?>
+// Get API key from environment
+$api_key = getenv('ANTHROPIC_API_KEY');
+if (empty($api_key)) {
+    error_log('CPHELP: ANTHROPIC_API_KEY not set');
+    echo json_encode($default_response);
+    exit;
+}
+
+// System prompt for Claude
+$system_prompt = <<<'PROMPT'
+You are an intelligent IT support triage assistant for Creative Planning Technology, a managed service provider delivering white-glove IT support.
+
+Your job is to analyze a user's support request and return three things:
+1. A clear, concise SUBJECT line for the support ticket (max 10 words)
+2. A PRIORITY assessment (Urgent, High, or Normal)
+3. ZERO to TWO follow-up questions — ONLY if they would genuinely help the support team resolve the issue faster
+
+PRIORITY RULES:
+- Urgent: Multiple users affected AND work is completely stopped, OR critical shared system (phones, email server, line-of-business app) is fully down
+- High: Multiple users with degraded functionality, OR a few users completely unable to work
+- Normal: Individual user issue, OR any issue that's an inconvenience but work can continue (this is MOST tickets)
+
+QUESTION RULES — THIS IS THE MOST IMPORTANT PART:
+- Ask questions ONLY when the missing information would change how the support team approaches the issue
+- If the issue is already clear and actionable (e.g., "my monitor won't turn on," "our phone system is completely down"), return ZERO questions
+- Never ask more than 2 questions
+- Never ask users to run diagnostics, check settings, or do technical troubleshooting
+- Focus on: scope of impact (how many people affected), timeline (when did it start), what they were trying to do, and whether it's affecting others
+- Write questions in plain, friendly language — no jargon
+- For Urgent issues, always ask about business impact if not already stated
+
+PROXY DETECTION:
+- If the description suggests someone is submitting on behalf of another person (phrases like "on behalf of," "submitting for," "my colleague needs help," "they can't," etc.), include the flag proxy_detected: true in your response
+
+OUTPUT FORMAT (strict JSON only — no markdown, no code fences):
+{
+  "subject": "Brief ticket subject",
+  "priority": "Normal",
+  "reason": "One sentence explaining the priority level",
+  "questions": [],
+  "proxy_detected": false
+}
+
+If no questions are needed, return an empty questions array. This is expected and preferred when the issue is already clear.
+PROMPT;
+
+// Build the API request
+$request_body = json_encode([
+    'model'       => 'claude-sonnet-4-5-20250929',
+    'max_tokens'  => 400,
+    'temperature' => 0.2,
+    'system'      => $system_prompt,
+    'messages'    => [
+        ['role' => 'user', 'content' => $issue]
+    ],
+]);
+
+// Call the Anthropic API
+$ch = curl_init('https://api.anthropic.com/v1/messages');
+curl_setopt_array($ch, [
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_POST           => true,
+    CURLOPT_POSTFIELDS     => $request_body,
+    CURLOPT_HTTPHEADER     => [
+        'x-api-key: ' . $api_key,
+        'anthropic-version: 2023-06-01',
+        'content-type: application/json',
+    ],
+    CURLOPT_TIMEOUT        => 30,
+    CURLOPT_CONNECTTIMEOUT => 10,
+]);
+
+$response = curl_exec($ch);
+$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+$curl_error = curl_error($ch);
+curl_close($ch);
+
+// Handle curl errors
+if ($response === false || !empty($curl_error)) {
+    error_log('CPHELP: cURL error — ' . $curl_error);
+    echo json_encode($default_response);
+    exit;
+}
+
+// Handle non-200 responses
+if ($http_code !== 200) {
+    error_log('CPHELP: Anthropic API returned HTTP ' . $http_code . ' — ' . substr($response, 0, 500));
+    echo json_encode($default_response);
+    exit;
+}
+
+// Parse the Anthropic API response
+$api_response = json_decode($response, true);
+if (!$api_response || empty($api_response['content'][0]['text'])) {
+    error_log('CPHELP: Unexpected API response structure');
+    echo json_encode($default_response);
+    exit;
+}
+
+$claude_text = $api_response['content'][0]['text'];
+
+// Parse Claude's JSON response
+$analysis = json_decode($claude_text, true);
+if (!$analysis || !is_array($analysis)) {
+    // Try extracting JSON from the response in case Claude wrapped it
+    if (preg_match('/\{[\s\S]*\}/', $claude_text, $matches)) {
+        $analysis = json_decode($matches[0], true);
+    }
+    if (!$analysis || !is_array($analysis)) {
+        error_log('CPHELP: Failed to parse Claude response — ' . substr($claude_text, 0, 500));
+        echo json_encode($default_response);
+        exit;
+    }
+}
+
+// Validate and sanitize the response
+$result = [
+    'subject'        => isset($analysis['subject']) && is_string($analysis['subject'])
+                            ? substr($analysis['subject'], 0, 200) : '',
+    'priority'       => in_array($analysis['priority'] ?? '', ['Urgent', 'High', 'Normal'])
+                            ? $analysis['priority'] : 'Normal',
+    'reason'         => isset($analysis['reason']) && is_string($analysis['reason'])
+                            ? substr($analysis['reason'], 0, 500) : 'Standard support request',
+    'questions'      => [],
+    'proxy_detected' => ($analysis['proxy_detected'] ?? false) === true,
+];
+
+// Validate questions array (max 2 string items)
+if (isset($analysis['questions']) && is_array($analysis['questions'])) {
+    foreach (array_slice($analysis['questions'], 0, 2) as $q) {
+        if (is_string($q) && !empty(trim($q))) {
+            $result['questions'][] = trim($q);
+        }
+    }
+}
+
+echo json_encode($result);

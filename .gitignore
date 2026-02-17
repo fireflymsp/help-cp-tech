@@ -1,24 +1,16 @@
-# Configuration files with sensitive data
-config.php
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
 
 # Environment files
 .env
 .env.local
-.env.production
 
-# Log files
-*.log
+# Build prompt (not needed in production)
+CPHELP Rebuild Prompt.md
 
-# Temporary files
-*.tmp
-*.temp
-
-# IDE files
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS generated files
-.DS_Store
-Thumbs.db
+# Original image source files (assets/ has what we need)
+images/

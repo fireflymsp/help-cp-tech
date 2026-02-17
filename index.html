@@ -1,460 +1,302 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Comprehensive Search Engine Blocking -->
-  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex, notranslate">
-  <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet, noimageindex, notranslate">
-  <meta name="bingbot" content="noindex, nofollow, noarchive, nosnippet, noimageindex, notranslate">
-  <meta name="slurp" content="noindex, nofollow, noarchive, nosnippet, noimageindex, notranslate">
-  <meta name="msnbot" content="noindex, nofollow, noarchive, nosnippet, noimageindex, notranslate">
-  <meta name="teoma" content="noindex, nofollow, noarchive, nosnippet, noimageindex, notranslate">
-  <meta name="yandex" content="noindex, nofollow, noarchive, nosnippet, noimageindex, notranslate">
-  <meta name="baiduspider" content="noindex, nofollow, noarchive, nosnippet, noimageindex, notranslate">
-  <meta name="duckduckbot" content="noindex, nofollow, noarchive, nosnippet, noimageindex, notranslate">
-  <meta name="facebookexternalhit" content="noindex, nofollow, noarchive, nosnippet, noimageindex, notranslate">
-  <meta name="twitterbot" content="noindex, nofollow, noarchive, nosnippet, noimageindex, notranslate">
-  <meta name="linkedinbot" content="noindex, nofollow, noarchive, nosnippet, noimageindex, notranslate">
-  <meta name="whatsapp" content="noindex, nofollow, noarchive, nosnippet, noimageindex, notranslate">
-  <meta name="telegrambot" content="noindex, nofollow, noarchive, nosnippet, noimageindex, notranslate">
-  <meta name="slackbot" content="noindex, nofollow, noarchive, nosnippet, noimageindex, notranslate">
-  <meta name="discordbot" content="noindex, nofollow, noarchive, nosnippet, noimageindex, notranslate">
-  
-  <!-- Additional Security Headers -->
-  <meta name="referrer" content="no-referrer">
-  <meta name="referrer" content="no-referrer-when-downgrade">
-  <meta name="referrer" content="strict-origin-when-cross-origin">
-  
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
-  <title>Get Help</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Mukta+Malar:wght@400;500;700&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CPHELP — Creative Planning Technology Support</title>
 
-  <!-- Favicons -->
-  <link rel="apple-touch-icon" sizes="180x180" href="favicon_io/apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="favicon_io/favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="favicon_io/favicon-16x16.png">
-  <meta name="theme-color" content="#165D7D">
-    <link rel="shortcut icon" href="favicon_io/favicon.ico">
-      <link rel="stylesheet" href="styles.css?v=2.1">
+    <!-- Favicons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png">
+    <link rel="manifest" href="assets/site.webmanifest">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Mukta+Malar:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="header-content">
-                <div class="logo">
-                    <img src="images/stacked.png?v=1.1" alt="Creative Planning">
-                </div>
-                <h1>Get Help</h1>
-            </div>
+
+    <!-- ===== HEADER ===== -->
+    <header class="site-header">
+        <div class="header-inner">
+            <img src="assets/logo.png" alt="Creative Planning Business Services" class="header-logo">
+            <span class="header-divider"></span>
+            <span class="header-tagline">Technology Support</span>
         </div>
-        
-        <div class="content">
-            <div class="alert">
-                Please avoid sharing sensitive data such as passwords or other privileged info in this form. This is not a secure or encrypted platform.
-            </div>
-            
-            <!-- Sample Forms for Testing -->
-            <div class="sample-data-section">
-                <div class="sample-data-header" onclick="toggleSampleData()">
-                    <h3 style="margin: 0; color: #495057; font-size: 18px; display: flex; align-items: center; gap: 10px;">
-                        🧪 Test with Sample Data
-                    </h3>
-                    <div class="sample-data-toggle">
-                        <span class="sample-toggle-arrow" id="sampleToggleArrow">▶</span>
-                    </div>
-                </div>
-                <div class="sample-data-content" id="sampleDataContent">
-                    <p style="margin-bottom: 15px; color: #6c757d; font-size: 14px;">Click any sample below to auto-fill the form for testing:</p>
-                    
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
-                        <button type="button" class="sample-btn" onclick="fillSampleForm('wifi')" style="background: #007bff; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-size: 14px; transition: background 0.2s;">
-                            WiFi Connection Issues
-                        </button>
-                        
-                        <button type="button" class="sample-btn" onclick="fillSampleForm('printer')" style="background: #28a745; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-size: 14px; transition: background 0.2s;">
-                            Printer Not Working
-                        </button>
-                        
-                        <button type="button" class="sample-btn" onclick="fillSampleForm('email')" style="background: #ffc107; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-size: 14px; transition: background 0.2s;">
-                            Email Access Problems
-                        </button>
-                        
-                        <button type="button" class="sample-btn" onclick="fillSampleForm('software')" style="background: #dc3545; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-size: 14px; transition: background 0.2s;">
-                            Software Crashes
-                        </button>
-                        
-                        <button type="button" class="sample-btn" onclick="fillSampleForm('urgent')" style="background: #dc3545; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-size: 14px; transition: background 0.2s; border: 3px solid #ffc107;">
-                            URGENT: System Down
-                        </button>
-                        
-                        <button type="button" class="sample-btn" onclick="fillSampleForm('proxy')" style="background: #6f42c1; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-size: 14px; transition: background 0.2s;">
-                            Submitting for Someone Else
-                        </button>
-                        
+    </header>
 
-                    </div>
-                    
-                    <button type="button" onclick="clearForm()" style="background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-top: 15px;">
-                        🗑️ Clear Form
-                    </button>
-                    
-                    <button type="button" onclick="testWebhookConnection()" style="background: #17a2b8; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-top: 15px; margin-left: 10px;">
-                        🔗 Test Webhook
-                    </button>
-                </div>
+    <!-- ===== MAIN CONTAINER ===== -->
+    <main class="container">
+
+        <!-- ===== STAGE 1: INTAKE FORM ===== -->
+        <section id="stage-form" class="stage active">
+            <h1 class="page-title">How Can We Help?</h1>
+
+            <!-- Sensitive info warning -->
+            <div class="alert alert-warning" role="alert">
+                <svg class="alert-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                    <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                <span>Please do not include sensitive information such as passwords, SSNs, or financial data.</span>
             </div>
 
-            <form id="ticketForm" method="POST" target="hiddenSubmitFrame">
-                <div class="form-section">
-                    <h2>Contact Information</h2>
-                    
+            <form id="intake-form" novalidate>
+                <div class="form-row">
                     <div class="form-group">
-                        <label for="fullName" class="required-field">Full Name</label>
-                        <input type="text" id="fullName" name="fullName" required>
+                        <label for="fullName">Full Name <span class="required">*</span></label>
+                        <input type="text" id="fullName" name="fullName" required autocomplete="name" placeholder="Jane Smith">
+                        <span class="field-error" id="fullName-error"></span>
                     </div>
-                    
                     <div class="form-group">
-                        <label for="companyName" class="required-field">Company Name</label>
-                        <input type="text" id="companyName" name="companyName" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="email" class="required-field">Email</label>
-                        <input type="email" id="email" name="email" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="phone" class="required-field">Phone Number</label>
-                        <input type="tel" id="phone" name="phone" required>
+                        <label for="companyName">Company Name <span class="required">*</span></label>
+                        <input type="text" id="companyName" name="companyName" required autocomplete="organization" placeholder="ACME Corp">
+                        <span class="field-error" id="companyName-error"></span>
                     </div>
                 </div>
-                
-                <div class="form-section">
-                    <h2>Ticket Details</h2>
-                    
+
+                <div class="form-row">
                     <div class="form-group">
-                        <label for="notes" class="required-field">Issue</label>
-                        <textarea id="notes" name="notes" required placeholder="Please describe your issue in detail..." data-ai-reviewable="true"></textarea>
+                        <label for="email">Email Address <span class="required">*</span></label>
+                        <input type="email" id="email" name="email" required autocomplete="email" placeholder="jane@acme.com">
+                        <span class="field-error" id="email-error"></span>
                     </div>
-                    
-                    <!-- AI Review Opt-in Section -->
-                    <div class="ai-review-optin">
-                        <div class="optin-checkbox-container">
-                            <input type="checkbox" id="aiReviewEnabled" name="aiReviewEnabled" class="ai-review-checkbox" checked>
-                            <label for="aiReviewEnabled" class="ai-review-label">
-                                Smart Ticket Review
-                            </label>
-                                                                    <button type="button" class="whats-this-btn" onclick="showAIReviewModal()">
-                        <span class="whats-this-text">What's this?</span>
+                    <div class="form-group">
+                        <label for="phone">Phone Number <span class="required">*</span></label>
+                        <input type="tel" id="phone" name="phone" required autocomplete="tel" placeholder="555-123-4567">
+                        <span class="field-error" id="phone-error"></span>
+                    </div>
+                </div>
+
+                <div class="form-group form-group-full">
+                    <label for="notes">Describe Your Issue <span class="required">*</span></label>
+                    <textarea id="notes" name="notes" rows="5" required
+                        placeholder="Tell us what's going on — the more detail you provide, the faster we can help."></textarea>
+                    <span class="field-error" id="notes-error"></span>
+                </div>
+
+                <!-- AI Review Toggle -->
+                <div class="ai-toggle-row">
+                    <label class="toggle-label">
+                        <input type="checkbox" id="aiReviewEnabled" checked>
+                        <span class="toggle-switch"></span>
+                        <span class="toggle-text">Enable Smart Ticket Review</span>
+                    </label>
+                    <button type="button" class="link-btn" id="ai-info-btn" aria-label="What is Smart Ticket Review?">What's this?</button>
+                </div>
+
+                <!-- Hidden fields from URL params -->
+                <input type="hidden" id="computerName" name="computerName" value="">
+                <input type="hidden" id="userName" name="userName" value="">
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary" id="btn-next">
+                        <span class="btn-label">Next</span>
+                        <span class="btn-loading" aria-hidden="true">
+                            <span class="spinner"></span> Analyzing...
+                        </span>
                     </button>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="screenshot">Screenshot (Optional)</label>
-                        <div class="file-upload">
-                            <input type="file" id="screenshot" name="screenshot" accept="image/*" capture="environment">
-                            <label for="screenshot" class="file-upload-label">
-                                Click to upload a screenshot or take a photo
-                            </label>
-                        </div>
-                        <div id="filePreview" class="file-preview">
-                            <div class="file-info">
-                                <span id="fileName"></span>
-                                <button type="button" class="remove-file" onclick="removeFile()">Remove</button>
-                            </div>
-                            <img id="imagePreview" src="" alt="Screenshot preview">
-                        </div>
-                    </div>
-                </div>
-                
-                <input type="hidden" name="formType" value="Support_Ticket">
-                <input type="hidden" name="submissionDate" id="submissionDate">
-                <input type="hidden" name="screenshotBase64" id="screenshotBase64">
-                <input type="hidden" name="generatedSubject" id="generatedSubjectHidden">
-                <input type="hidden" name="aiQuestions" id="aiQuestionsHidden">
-                <input type="hidden" name="aiAnswers" id="aiAnswersHidden">
-                <input type="hidden" name="urgencyLevel" id="urgencyHidden">
-                <input type="hidden" name="urgencyConfirmed" id="urgencyConfirmedHidden">
-                <input type="hidden" name="actualUserName" id="actualUserNameHidden">
-                <input type="hidden" name="actualUserCompany" id="actualUserCompanyHidden">
-                <input type="hidden" name="actualUserEmail" id="actualUserEmailHidden">
-                <input type="hidden" name="actualUserPhone" id="actualUserPhoneHidden">
-                <input type="hidden" name="computerName" id="computerNameHidden">
-                <input type="hidden" name="userName" id="userNameHidden">
-                <input type="hidden" name="aiReviewEnabled" id="aiReviewEnabledHidden">
-                <input type="hidden" name="aiReviewContent" id="aiReviewContentHidden">
-                
-                <div class="submit-section">
-                    <button type="button" id="nextBtn" class="submit-btn">Next</button>
                 </div>
             </form>
-            
-            <div id="summaryPage" class="summary-page" style="display: none;">
-                <h2 style="color: #165D7D; margin-bottom: 30px; text-align: center;" id="mainPageTitle">Review Your Request</h2>
-                
+        </section>
 
-                
-                <div class="summary-section">
-                    <div class="collapsible-summary">
-                        <div class="summary-header" onclick="toggleSummaryDetails()">
-                            <div class="summary-title">
-                                <h3 style="color: #165D7D; margin: 0; display: flex; align-items: center; gap: 10px;">
-                                    <span id="summarySubjectTitle">Request Summary</span>
-                                </h3>
-                            </div>
-                            <div class="summary-toggle">
-                                <span class="toggle-arrow" id="toggleArrow">▶</span>
-                            </div>
-                        </div>
-                        <div class="summary-details" id="summaryDetails">
-                            <div class="summary-content">
-                                <div class="summary-item">
-                                    <strong>Name:</strong> <span id="summaryName"></span>
-                                </div>
-                                <div class="summary-item">
-                                    <strong>Company:</strong> <span id="summaryCompany"></span>
-                                </div>
-                                <div class="summary-item">
-                                    <strong>Email:</strong> <span id="summaryEmail"></span>
-                                </div>
-                                <div class="summary-item">
-                                    <strong>Phone:</strong> <span id="summaryPhone"></span>
-                                </div>
-                                <div class="summary-item" style="grid-column: 1 / -1;">
-                                    <strong>Issue:</strong> <span id="summaryNotes"></span>
-                                </div>
-                                <div class="summary-item" id="computerDisplay" style="display: none;">
-                                    <strong>Computer:</strong> <span id="computerText"></span>
-                                </div>
-                                <div class="summary-item" id="userDisplay" style="display: none;">
-                                    <strong>User:</strong> <span id="userText"></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
+        <!-- ===== STAGE 2: SUMMARY & QUESTIONS ===== -->
+        <section id="stage-summary" class="stage" aria-hidden="true">
+            <h1 class="page-title">Review Your Request</h1>
 
-                
-                <div class="summary-section" id="urgencyConfirmationSection" style="display: none; margin-top: 8px;">
-                    <div id="urgencyConfirmationContent" style="background: #f8f9fa; border: 2px solid #165D7D; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-                        <div id="urgencyConfirmationText"></div>
-                        
-                        <div style="margin-top: 20px;">
-                            <label style="display: block; margin-bottom: 12px; font-weight: 500; color: #363739; font-size: 16px;">Does this urgency level seem correct?</label>
-                            
-                            <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
-                                <button type="button" class="urgency-btn" onclick="confirmUrgency('yes')" style="background: #28a745; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s; font-size: 14px;">Yes, this is correct</button>
-                                <button type="button" class="urgency-btn" onclick="showUrgencyAdjustment()" style="background: #dc3545; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s; font-size: 14px;">No, adjust this</button>
-                            </div>
-                            
-                            <!-- Inline urgency adjustment form -->
-                            <div id="urgencyAdjustmentForm" style="display: none; background: white; border: 1px solid #dee2e6; border-radius: 8px; padding: 25px; margin-top: 20px;">
-                                <h4 style="margin-top: 0; margin-bottom: 20px; color: #165D7D; font-size: 18px;">Adjust Urgency Level</h4>
-                                
-                                <div style="margin-bottom: 20px;">
-                                    <label style="display: block; margin-bottom: 10px; font-weight: 500; font-size: 15px;">Select new urgency level:</label>
-                                    <select id="newUrgencySelect" style="width: 100%; padding: 12px; border: 2px solid #dee2e6; border-radius: 6px; font-size: 15px;">
-                                        <option value="LOW">LOW - Minor inconvenience, non-critical features</option>
-                                        <option value="MEDIUM">MEDIUM - Work disruption, productivity impact</option>
-                                        <option value="HIGH">HIGH - Business critical, system down, urgent deadlines</option>
-                                    </select>
-                                </div>
-                                
-                                <div style="margin-bottom: 25px;">
-                                    <label style="display: block; margin-bottom: 10px; font-weight: 500; font-size: 15px;">Additional context (optional):</label>
-                                    <textarea id="urgencyContext" placeholder="Any additional details about why this urgency level is more appropriate..." style="width: 100%; padding: 12px; border: 2px solid #dee2e6; border-radius: 6px; font-size: 15px; min-height: 100px; resize: vertical;"></textarea>
-                                </div>
-                                
-                                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                                    <button type="button" onclick="applyUrgencyAdjustment()" style="background: #165D7D; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;">Apply Changes</button>
-                                    <button type="button" onclick="hideUrgencyAdjustment()" style="background: #6c757d; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;">Cancel</button>
-                                </div>
-                            </div>
-                        </div>
+            <!-- Collapsible: What You Entered -->
+            <details class="card summary-details" open>
+                <summary class="card-header">
+                    <span>Your Information</span>
+                    <svg class="chevron" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                </summary>
+                <div class="card-body">
+                    <div class="summary-grid">
+                        <div class="summary-item"><span class="summary-label">Name</span><span id="sum-name" class="summary-value"></span></div>
+                        <div class="summary-item"><span class="summary-label">Company</span><span id="sum-company" class="summary-value"></span></div>
+                        <div class="summary-item"><span class="summary-label">Email</span><span id="sum-email" class="summary-value"></span></div>
+                        <div class="summary-item"><span class="summary-label">Phone</span><span id="sum-phone" class="summary-value"></span></div>
+                    </div>
+                    <div class="summary-issue">
+                        <span class="summary-label">Issue Description</span>
+                        <p id="sum-notes" class="summary-value"></p>
                     </div>
                 </div>
-                
-                <!-- Confirmed Urgency Display -->
-                <div class="summary-section" id="confirmedUrgencySection" style="display: none; margin-top: 20px;">
-                    <div id="confirmedUrgencyContent" style="background: #f8f9fa; border: 2px solid #28a745; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
-                        <div id="confirmedUrgencyText"></div>
-                    </div>
-                </div>
-                
-                <!-- Proxy Detection Confirmation -->
-                <div class="summary-section" id="proxyDetectionSection" style="display: none; margin-top: 15px;">
-                    <h3 style="color: #6f42c1; margin-bottom: 20px;">Submitting for someone else?</h3>
-                    <div style="background: #f8f9fa; border: 2px solid #6f42c1; border-radius: 8px; padding: 25px; margin-bottom: 25px;">
-                        <div style="text-align: center;">
-                            <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
-                                <button type="button" onclick="confirmProxySubmission('yes')" style="background: #28a745; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;">Yes, submitting for someone else</button>
-                                <button type="button" onclick="confirmProxySubmission('no')" style="background: #dc3545; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;">No, this is my own issue</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Proxy Contact Information Subform -->
-                <div class="summary-section" id="proxyContactSection" style="display: none; margin-top: 15px;">
-                    <h3 style="color: #6f42c1; margin-bottom: 20px;">Contact Information for Impacted User</h3>
-                    <div style="background: #f8f9fa; border: 2px solid #6f42c1; border-radius: 8px; padding: 25px; margin-bottom: 25px;">
-                        <p style="color: #6f42c1; margin-bottom: 20px; font-style: italic;">
-                            Since you're submitting on behalf of someone else, please provide their contact information so we can reach them directly.
-                        </p>
-                        
-                        <div class="proxy-form-grid">
-                            <div class="proxy-form-field">
-                                <label for="actualUserName" style="display: block; margin-bottom: 8px; font-weight: 500; color: #363739;">Impacted User's Full Name *</label>
-                                <input type="text" id="actualUserName" name="actualUserName" required style="width: 100%; padding: 12px; border: 2px solid #dee2e6; border-radius: 6px; font-size: 15px;">
-                            </div>
-                            <div class="proxy-form-field">
-                                <label for="actualUserEmail" style="display: block; margin-bottom: 8px; font-weight: 500; color: #363739;">Impacted User's Email *</label>
-                                <input type="email" id="actualUserEmail" name="actualUserEmail" required style="width: 100%; padding: 12px; border: 2px solid #dee2e6; border-radius: 6px; font-size: 15px;">
-                            </div>
-                        </div>
-                        
-                        <div class="proxy-form-grid">
-                            <div class="proxy-form-field">
-                                <label for="actualUserPhone" style="display: block; margin-bottom: 8px; font-weight: 500; color: #363739;">Impacted User's Phone *</label>
-                                <input type="tel" id="actualUserPhone" name="actualUserPhone" required style="width: 100%; padding: 12px; border: 2px solid #dee2e6; border-radius: 6px; font-size: 15px;">
-                            </div>
-                        </div>
-                        
-                        <div style="background: #e9ecef; border-left: 4px solid #6f42c1; padding: 15px; border-radius: 4px;">
-                            <small style="color: #6c757d; font-style: italic;">
-                                <strong>Note:</strong> This information will be used to contact the impacted user directly. We'll still communicate with you about the ticket status.
-                            </small>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="summary-section" style="margin-top: 15px;">
-                    
-                    <div id="summaryQuestionsContainer" style="margin-bottom: 25px;">
-                        <div id="summaryQuestionsContent">
-                            <div id="aiLoadingMessage" style="text-align: center; color: #165D7D; font-style: italic;">
-                                <div style="font-size: 16px; font-weight: 500;">Automations loading, please wait...</div>
-                                <div style="font-size: 14px; margin-top: 8px; opacity: 0.8;">Analyzing your request and generating helpful questions</div>
-                            </div>
-                        </div>
-                        <div id="summaryAnswersContainer" style="margin-top: 25px;"></div>
-                    </div>
-                </div>
-                
-                <div class="button-container">
-                    <button type="button" id="submitTicketBtn" class="submit-btn">
-                        Submit Ticket
-                    </button>
-                    <button type="button" id="backToEditBtn" class="back-btn">
-                        ← Back to Edit
-                    </button>
+            </details>
+
+            <!-- AI-Generated Subject -->
+            <div class="card" id="subject-card">
+                <div class="card-header">Ticket Subject</div>
+                <div class="card-body">
+                    <p id="sum-subject" class="generated-subject"></p>
                 </div>
             </div>
-            
-            <div id="confirmationMessage" class="confirmation-message">
-                <div class="form-section">
-                    <h2>Ticket Submitted Successfully</h2>
-                    <p style="font-size: 18px; margin-bottom: 25px; color: #363739; line-height: 1.6;">Thank you for submitting your ticket. We'll get back to you as soon as possible.</p>
-                </div>
-                
-                <div class="form-section">
-                    <h2>What Happens Next</h2>
-                    <div class="form-group">
-                        <ul style="line-height: 1.8; margin: 0; padding-left: 20px; color: #363739; font-size: 16px;">
-                            <li style="margin-bottom: 12px;">You'll receive a confirmation email</li>
-                            <li style="margin-bottom: 12px;">Our team will review your ticket within 24 hours</li>
-                            <li style="margin-bottom: 12px;">We'll contact you via email or phone to resolve your issue</li>
-                        </ul>
+
+            <!-- Priority Assessment -->
+            <div class="card" id="priority-card">
+                <div class="card-header">Priority Assessment</div>
+                <div class="card-body">
+                    <div class="priority-display">
+                        <span id="priority-badge" class="priority-badge"></span>
+                        <p id="priority-reason" class="priority-reason"></p>
                     </div>
-                    
-                    <div class="form-group" style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; margin-top: 20px;">
-                        <p style="margin: 0; font-size: 14px; color: #6c757d;">
-                            A confirmation email has been sent to <strong><span id="confirmEmail"></span></strong>
-                        </p>
+                    <div class="priority-actions">
+                        <span class="priority-prompt">Does this look right?</span>
+                        <div class="priority-buttons">
+                            <button type="button" class="btn btn-sm btn-confirm-priority active" data-action="confirm">Yes, looks good</button>
+                            <button type="button" class="btn btn-sm btn-adjust-priority" data-action="adjust">Adjust priority</button>
+                        </div>
+                    </div>
+                    <!-- Priority adjustment (hidden by default) -->
+                    <div id="priority-adjust" class="priority-adjust hidden">
+                        <label for="priority-select">Select priority:</label>
+                        <select id="priority-select">
+                            <option value="Normal">Normal</option>
+                            <option value="High">High</option>
+                            <option value="Urgent">Urgent</option>
+                        </select>
                     </div>
                 </div>
-                
-                <div class="form-section">
-                    <h2>Need Immediate Help?</h2>
-                    <div class="form-group">
-                        <p style="color: #363739; margin-bottom: 15px;">Would you rather talk to someone directly?</p>
-                        <div class="contact-details">
-                            <div class="contact-item">
-                                <a href="tel:866.933.4359" style="color: #165D7D; text-decoration: none; font-weight: 600; font-size: 18px;">866.933.4359</a>
-                            </div>
+            </div>
+
+            <!-- AI Follow-Up Questions (shown only if questions exist) -->
+            <div id="questions-section" class="card hidden">
+                <div class="card-header">A Couple of Quick Questions</div>
+                <div class="card-body">
+                    <p class="questions-intro">These optional questions help our team resolve your issue faster.</p>
+                    <div id="questions-container"></div>
+                </div>
+            </div>
+
+            <!-- No-questions confirmation (shown when AI returns zero questions) -->
+            <div id="no-questions-section" class="card hidden">
+                <div class="card-body no-questions-body">
+                    <svg class="check-icon" viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#28a745" stroke-width="2.5">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                        <polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                    <p>Your issue is clear and ready to submit.</p>
+                </div>
+            </div>
+
+            <!-- Proxy Detection Section (shown only if proxy detected) -->
+            <div id="proxy-section" class="card hidden">
+                <div class="card-header proxy-header">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                    Submitting on Behalf of Someone?
+                </div>
+                <div class="card-body">
+                    <p class="proxy-intro">It sounds like this issue affects someone else. Please provide their contact details so our team can reach them directly.</p>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="actualUserName">Their Full Name</label>
+                            <input type="text" id="actualUserName" name="actualUserName" placeholder="John Doe">
+                        </div>
+                        <div class="form-group">
+                            <label for="actualUserEmail">Their Email</label>
+                            <input type="email" id="actualUserEmail" name="actualUserEmail" placeholder="john@acme.com">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="actualUserPhone">Their Phone</label>
+                            <input type="tel" id="actualUserPhone" name="actualUserPhone" placeholder="555-987-6543">
+                        </div>
+                        <div class="form-group">
+                            <label for="actualUserCompany">Their Company</label>
+                            <input type="text" id="actualUserCompany" name="actualUserCompany" placeholder="ACME Corp">
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-    
-    <!-- AI Review Modal -->
-    <div id="aiReviewModal" class="ai-review-modal" style="display: none;">
-        <div class="ai-review-modal-content">
-            <div class="ai-review-modal-header">
-                <h3>Smart Ticket Review</h3>
-                <button type="button" class="ai-review-modal-close" onclick="hideAIReviewModal()" aria-label="Close modal">
-                    ×
+
+            <!-- Actions -->
+            <div class="form-actions form-actions-split">
+                <button type="button" class="btn btn-secondary" id="btn-back">Back to Edit</button>
+                <button type="button" class="btn btn-primary" id="btn-submit">
+                    <span class="btn-label">Submit Ticket</span>
+                    <span class="btn-loading" aria-hidden="true">
+                        <span class="spinner"></span> Submitting...
+                    </span>
                 </button>
             </div>
-            <div class="ai-review-modal-body">
-                <div class="ai-review-content">
-                    <h4>How it works:</h4>
-                    <p>Our AI assistant reviews your issue description before submission to help ensure we have all the information needed to resolve your problem quickly.</p>
-                    
-                    <h4>What the AI reviews:</h4>
-                    <ul class="ai-review-list ai-review-list-positive">
-                        <li>✓ Your issue description text only</li>
-                        <li>✓ The problem you're experiencing</li>
-                        <li>✓ Any error messages you include</li>
-                    </ul>
-                    
-                    <h4>What the AI does NOT see:</h4>
-                    <ul class="ai-review-list ai-review-list-negative">
-                        <li>✗ Your name or personal information</li>
-                        <li>✗ Email address or phone number</li>
-                        <li>✗ Account numbers or passwords</li>
-                        <li>✗ Payment information</li>
-                        <li>✗ File attachments</li>
-                    </ul>
-                    
-                    <h4>How this helps you:</h4>
-                    <ul class="ai-review-list ai-review-list-benefits">
-                        <li>• Prompts for missing details before you submit</li>
-                        <li>• Ensures urgent issues are properly prioritized</li>
-                        <li>• Reduces back-and-forth clarification emails</li>
-                        <li>• Gets you faster, more accurate support</li>
-                    </ul>
-                    
-                    <div class="ai-review-privacy">
-                        <p><strong>Your privacy is protected.</strong> The only data that will be analyzed from this request is the text typed into Issue.</p>
+        </section>
+
+        <!-- ===== STAGE 3: CONFIRMATION ===== -->
+        <section id="stage-confirm" class="stage" aria-hidden="true">
+            <div class="confirmation-content">
+                <svg class="confirm-icon" viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="#28a745" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+                <h1 class="page-title confirm-title">Thank You, <span id="confirm-name"></span>!</h1>
+                <p class="confirm-message">Your support ticket has been submitted successfully. Our team will review your request and reach out shortly.</p>
+
+                <div class="card next-steps-card">
+                    <div class="card-header">What Happens Next</div>
+                    <div class="card-body">
+                        <div class="next-steps">
+                            <div class="step">
+                                <span class="step-number">1</span>
+                                <p>Our team receives your ticket and begins reviewing the details.</p>
+                            </div>
+                            <div class="step">
+                                <span class="step-number">2</span>
+                                <p>A technician will be assigned and will reach out to you directly.</p>
+                            </div>
+                            <div class="step">
+                                <span class="step-number">3</span>
+                                <p>We'll work with you until the issue is fully resolved.</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
+
+                <div class="urgent-help">
+                    <p>Need Immediate Help?</p>
+                    <a href="tel:8669334359" class="phone-link">866.933.4359</a>
+                </div>
             </div>
-            <div class="ai-review-modal-footer">
-                <button type="button" class="ai-review-modal-close-btn" onclick="hideAIReviewModal()">Got it</button>
+        </section>
+    </main>
+
+    <!-- ===== AI INFO MODAL ===== -->
+    <div id="ai-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="modal-title">Smart Ticket Review</h2>
+                <button type="button" class="modal-close" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>When enabled, our AI assistant will quickly analyze your issue to:</p>
+                <ul>
+                    <li><strong>Generate a clear subject line</strong> for faster routing</li>
+                    <li><strong>Assess priority</strong> so urgent issues get immediate attention</li>
+                    <li><strong>Ask smart follow-up questions</strong> (only when needed) to help our team resolve your issue faster</li>
+                </ul>
+                <p>Your data is processed securely and is only used to create your support ticket. You can disable this feature at any time using the toggle.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary modal-close-btn">Got It</button>
             </div>
         </div>
     </div>
-    
-            <!-- Hidden iframe for form submission -->
-        <iframe name="hiddenSubmitFrame" style="display: none;"></iframe>    
-    
-    <!-- Modular JavaScript -->
-    <script src="js/utils.js"></script>
-    <script src="js/sample-data.js"></script>
-    <script src="js/ai-integration.js"></script>
+
+    <!-- ===== SCRIPTS ===== -->
     <script src="js/ui-manager.js"></script>
+    <script src="js/ai-integration.js"></script>
     <script src="js/form-handler.js"></script>
     <script src="js/main.js"></script>
-
 </body>
 </html>

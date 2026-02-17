@@ -1,374 +1,268 @@
-// UI Management module - summary pages, modals, scroll indicators, urgency management
+/**
+ * UI Manager — handles modals, stage transitions, priority UI, and proxy detection UI
+ */
+const UIManager = (() => {
+    'use strict';
 
-function showAIReviewModal() {
-    const modal = document.getElementById('aiReviewModal');
-    if (modal) {
-        modal.style.display = 'flex';
-        
-        // Focus the modal for accessibility
-        modal.setAttribute('tabindex', '-1');
-        modal.focus();
-        
-        // Add keyboard navigation
-        const handleKeydown = function(e) {
-            if (e.key === 'Escape') {
-                hideAIReviewModal();
-            }
-        };
-        
-        // Close modal when clicking outside
-        const handleClick = function(e) {
-            if (e.target === modal) {
-                hideAIReviewModal();
-            }
-        };
-        
-        modal.addEventListener('keydown', handleKeydown);
-        modal.addEventListener('click', handleClick);
-        
-        // Store event listeners for cleanup
-        modal._keydownHandler = handleKeydown;
-        modal._clickHandler = handleClick;
-        
-        // Trap focus within modal
-        trapFocusInModal(modal);
-    }
-}
-
-function trapFocusInModal(modal) {
-    // Remove existing focus trap handler if it exists
-    if (modal._trapFocusHandler) {
-        modal.removeEventListener('keydown', modal._trapFocusHandler);
-    }
-    
-    const focusableElements = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
-    const firstElement = focusableElements[0];
-    const lastElement = focusableElements[focusableElements.length - 1];
-    
-    if (firstElement) {
-        firstElement.focus();
-    }
-    
-    // Create and store the focus trap handler
-    modal._trapFocusHandler = function(e) {
-        if (e.key === 'Tab') {
-            if (e.shiftKey) {
-                if (document.activeElement === firstElement) {
-                    e.preventDefault();
-                    lastElement.focus();
-                }
-            } else {
-                if (document.activeElement === lastElement) {
-                    e.preventDefault();
-                    firstElement.focus();
-                }
-            }
-        }
-    };
-    
-    // Add the event listener once
-    modal.addEventListener('keydown', modal._trapFocusHandler);
-}
-
-function hideAIReviewModal() {
-    const modal = document.getElementById('aiReviewModal');
-    if (modal) {
-        modal.style.display = 'none';
-        
-        // Clean up event listeners
-        if (modal._keydownHandler) {
-            modal.removeEventListener('keydown', modal._keydownHandler);
-            delete modal._keydownHandler;
-        }
-        if (modal._clickHandler) {
-            modal.removeEventListener('click', modal._clickHandler);
-            delete modal._clickHandler;
-        }
-        if (modal._trapFocusHandler) {
-            modal.removeEventListener('keydown', modal._trapFocusHandler);
-            delete modal._trapFocusHandler;
-        }
-        
-        // Remove tabindex
-        modal.removeAttribute('tabindex');
-    }
-}
-
-
-
-
-
-function scrollToSubmit() {
-    console.log('scrollToSubmit function called');
-
-    // Check if we're on the summary page
-    const summaryPage = document.getElementById('summaryPage');
-    if (!summaryPage || summaryPage.style.display === 'none') {
-        console.error('Summary page is not visible');
-        showTempMessage('Please complete the form first');
-        return;
-    }
-
-    const maxWaitTime = 3000; // max 3 seconds
-    const intervalTime = 100; // check every 100ms
-    let elapsedTime = 0;
-
-    const intervalId = setInterval(() => {
-        const submitBtn = document.getElementById('submitTicketBtn');
-        if (submitBtn) {
-            clearInterval(intervalId);
-            console.log('Submit button found, attempting to scroll');
-            console.log('Button position:', submitBtn.getBoundingClientRect());
-            console.log('Button visible:', submitBtn.offsetParent !== null);
-            
-            try {
-                // Scroll to the submit button
-                submitBtn.scrollIntoView({ 
-                    behavior: 'smooth', 
-                    block: 'center' 
-                });
-                
-                console.log('Scroll completed');
-                
-                // Highlight the submit button briefly
-                submitBtn.style.transform = 'scale(1.05)';
-                submitBtn.style.boxShadow = '0 6px 20px rgba(106, 154, 128, 0.4)';
-                
-                setTimeout(() => {
-                    submitBtn.style.transform = 'scale(1)';
-                    submitBtn.style.boxShadow = '0 4px 12px rgba(22, 93, 125, 0.3)';
-                    console.log('Button highlight animation completed');
-                }, 500);
-                
-                showTempMessage('Scrolled to submit button!');
-                
-            } catch (error) {
-                console.error('Error during scroll:', error);
-                showTempMessage('Error during scroll: ' + error.message);
-            }
-        } else {
-            elapsedTime += intervalTime;
-            if (elapsedTime >= maxWaitTime) {
-                clearInterval(intervalId);
-                console.error('Submit button not found within timeout');
-                
-                // Let's see what buttons exist on the page
-                const allButtons = document.querySelectorAll('button');
-                console.log('All buttons on page:', allButtons);
-                
-                // Look for any button with "submit" in the text or ID
-                const submitLikeButtons = Array.from(allButtons).filter(btn => 
-                    btn.textContent.toLowerCase().includes('submit') || 
-                    btn.id.toLowerCase().includes('submit')
-                );
-                console.log('Submit-like buttons found:', submitLikeButtons);
-                
-                // Check if the button might be in a different container
-                const summaryContainer = document.querySelector('#summaryPage button[id*="submit"]');
-                console.log('Submit button in summary container:', summaryContainer);
-                
-                showTempMessage('Submit button not found - please check the form');
-            }
-        }
-    }, intervalTime);
-}
-
-// Urgency Management Functions
-function confirmUrgency(confirmed) {
-    if (confirmed === 'yes') {
-        document.getElementById('urgencyConfirmedHidden').value = 'Confirmed by user';
-        document.getElementById('urgencyConfirmationSection').style.display = 'none';
-        
-        // Show the confirmed urgency display
-        showConfirmedUrgency();
-        
-        showTempMessage('Urgency level confirmed!');
-    }
-}
-
-function showConfirmedUrgency() {
-    const confirmedUrgencySection = document.getElementById('confirmedUrgencySection');
-    const confirmedUrgencyText = document.getElementById('confirmedUrgencyText');
-    const urgencyHidden = document.getElementById('urgencyHidden');
-    
-    if (confirmedUrgencySection && confirmedUrgencyText && urgencyHidden) {
-        const urgencyValue = urgencyHidden.value;
-        const urgencyLevel = urgencyValue.split(':')[0].trim();
-        const urgencyReason = urgencyValue.split(': ')[1] || 'Confirmed by user';
-        
-        let urgencyDisplay = '';
-        if (urgencyLevel === 'HIGH') {
-            urgencyDisplay = `
-                <div style="background: #dc3545; color: white; padding: 12px 20px; border-radius: 8px; text-align: center; font-weight: 600; font-size: 16px; box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);">
-                    <strong>Confirmed Urgency Level: High Priority</strong>
-                </div>
-            `;
-        } else if (urgencyLevel === 'MEDIUM') {
-            urgencyDisplay = `
-                <div style="background: #ffc107; color: #212529; padding: 12px 20px; border-radius: 8px; text-align: center; font-weight: 600; font-size: 16px; box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);">
-                    <strong>Confirmed Urgency Level: Medium Priority</strong>
-                </div>
-            `;
-        } else {
-            urgencyDisplay = `
-                <div style="background: #28a745; color: white; padding: 12px 20px; border-radius: 8px; text-align: center; font-weight: 600; font-size: 16px; box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);">
-                    <strong>Confirmed Urgency Level: Low Priority</strong>
-                </div>
-            `;
-        }
-        
-        confirmedUrgencyText.innerHTML = urgencyDisplay;
-        confirmedUrgencySection.style.display = 'block';
-    }
-}
-
-function showUrgencyAdjustment() {
-    document.getElementById('urgencyAdjustmentForm').style.display = 'block';
-    // Pre-select current urgency level
-    const currentUrgency = document.getElementById('urgencyHidden').value;
-    const urgencyLevel = currentUrgency.split(':')[0].trim();
-    document.getElementById('newUrgencySelect').value = urgencyLevel;
-}
-
-function hideUrgencyAdjustment() {
-    document.getElementById('urgencyAdjustmentForm').style.display = 'none';
-}
-
-function applyUrgencyAdjustment() {
-    const newUrgency = document.getElementById('newUrgencySelect').value;
-    const context = document.getElementById('urgencyContext').value.trim();
-    
-    if (newUrgency) {
-        const currentUrgency = document.getElementById('urgencyHidden').value;
-        const currentReason = currentUrgency.split(': ')[1] || 'User adjusted';
-        
-        // Create new reason with context if provided
-        let newReason = currentReason;
-        if (context) {
-            newReason = `${currentReason} - User adjusted to ${newUrgency}: ${context}`;
-        } else {
-            newReason = `${currentReason} - User adjusted to ${newUrgency}`;
-        }
-        
-        document.getElementById('urgencyHidden').value = `${newUrgency}: ${newReason}`;
-        document.getElementById('urgencyConfirmedHidden').value = `Adjusted by user to ${newUrgency}`;
-        
-        // Hide the adjustment form
-        hideUrgencyAdjustment();
-        
-        // Update the urgency display
-        updateUrgencyDisplay(newUrgency, newReason);
-        
-        // Show the confirmed urgency display
-        showConfirmedUrgency();
-        
-        showTempMessage(`Urgency adjusted to ${newUrgency}`);
-    }
-}
-
-function updateUrgencyDisplay(urgencyLevel, urgencyReason) {
-    const urgencyText = document.getElementById('urgencyConfirmationText');
-    
-    if (urgencyLevel === 'HIGH') {
-        urgencyText.innerHTML = `
-            <div style="background: #dc3545; color: white; padding: 12px; border-radius: 6px; margin-bottom: 15px; text-align: center; font-weight: 500;">
-                <strong>High Priority Issue</strong><br>
-                <small></small>
-            </div>
-            <p style="margin-bottom: 15px;"><strong>We've identified this as a high-priority issue.</strong> To help us respond appropriately, please confirm if this urgency level is correct and tell us about the business impact.</p>
-        `;
-        urgencyText.querySelector('small').textContent = urgencyReason;
-    } else if (urgencyLevel === 'MEDIUM') {
-        urgencyText.innerHTML = `
-            <div style="background: #ffc107; color: #212529; padding: 12px; border-radius: 6px; margin-bottom: 15px; text-align: center; font-weight: 500;">
-                <strong>Medium Priority Issue</strong><br>
-                <small></small>
-            </div>
-            <p style="margin-bottom: 15px;"><strong>We've identified this as a medium-priority issue.</strong> Please confirm if this urgency level seems correct to you.</p>
-        `;
-        urgencyText.querySelector('small').textContent = urgencyReason;
-    } else {
-        urgencyText.innerHTML = `
-            <div style="background: #28a745; color: white; padding: 12px; border-radius: 6px; margin-bottom: 15px; text-align: center; font-weight: 500;">
-                <strong>Low Priority Issue</strong><br>
-                <small></small>
-            </div>
-            <p style="margin-bottom: 15px;"><strong>We've identified this as a low-priority issue.</strong> Please confirm if this urgency level seems correct to you.</p>
-        `;
-        urgencyText.querySelector('small').textContent = urgencyReason;
-    }
-}
-
-// Proxy Submission Functions
-function confirmProxySubmission(confirmed) {
-    // Hide the detection section regardless of choice
-    const proxyDetectionSection = document.getElementById('proxyDetectionSection');
-    if (proxyDetectionSection) {
-        proxyDetectionSection.style.display = 'none';
-    }
-    
-    if (confirmed === 'yes') {
-        // User confirms it's a proxy submission
-        document.getElementById('proxyContactSection').style.display = 'block';
-        showTempMessage('Proxy submission confirmed. Please fill in the impacted user\'s information.');
-    } else {
-        // User says it's not a proxy submission
-        document.getElementById('proxyContactSection').style.display = 'none';
-        
-        // Clear any proxy-related hidden fields
-        document.getElementById('actualUserNameHidden').value = '';
-        document.getElementById('actualUserEmailHidden').value = '';
-        document.getElementById('actualUserPhoneHidden').value = '';
-        
-        showTempMessage('Proxy submission dismissed. This will be treated as a direct submission.');
-    }
-}
-
-// Quick Submit Functions
-function submitTicketDirectly() {
-    // Capture AI questions and answers (even if empty)
-    captureAIQuestionsAndAnswers();
-    
-    // Submit the form to the webhook
-    const form = document.getElementById('ticketForm');
-    if (form) {
-        console.log('Quick submitting form to webhook...');
-        
-        // Submit the form using proper event dispatching
-        const submitEvent = new Event('submit', { cancelable: true });
-        if (form.dispatchEvent(submitEvent)) {
-            // If no preventDefault was called, proceed with submission
-            form.submit();
-        } else {
-            console.log('Quick submit form submission was prevented by event listeners');
-            return; // Exit early if submission was prevented
-        }
-        
-        // Hide summary page and show confirmation
-        document.getElementById('summaryPage').style.display = 'none';
-        
-        const confirmationMessage = document.getElementById('confirmationMessage');
-        confirmationMessage.classList.add('show');
-        
-        // Update confirmation details
-        const userEmail = document.getElementById('email').value;
-        const userName = document.getElementById('fullName').value;
-        document.getElementById('confirmEmail').textContent = userEmail;
-        
-            // Update the thank you message with name
-    const thankYouHeading = confirmationMessage.querySelector('h2');
-    thankYouHeading.textContent = `Thank You, ${userName}!`;
-        
-        // Scroll to top
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth'
+    /**
+     * Switch between form stages (form → summary → confirm)
+     */
+    function showStage(stageId) {
+        document.querySelectorAll('.stage').forEach(s => {
+            s.classList.remove('active');
+            s.setAttribute('aria-hidden', 'true');
         });
-        
-        // Show success message
-        showTempMessage('Ticket submitted successfully!');
-    } else {
-        console.error('Form not found for quick submit!');
-        showTempMessage('Error: Form not found');
+        const target = document.getElementById(stageId);
+        if (target) {
+            target.classList.add('active');
+            target.removeAttribute('aria-hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
     }
-}
+
+    /**
+     * Set a button into loading state
+     */
+    function setButtonLoading(btn, loading) {
+        if (loading) {
+            btn.classList.add('loading');
+            btn.disabled = true;
+        } else {
+            btn.classList.remove('loading');
+            btn.disabled = false;
+        }
+    }
+
+    /**
+     * Populate the summary stage with user-entered data
+     */
+    function populateSummary(data) {
+        document.getElementById('sum-name').textContent = data.fullName;
+        document.getElementById('sum-company').textContent = data.companyName;
+        document.getElementById('sum-email').textContent = data.email;
+        document.getElementById('sum-phone').textContent = data.phone;
+        document.getElementById('sum-notes').textContent = data.notes;
+    }
+
+    /**
+     * Display the AI-generated subject line
+     */
+    function showSubject(subject) {
+        const el = document.getElementById('sum-subject');
+        const card = document.getElementById('subject-card');
+        if (subject) {
+            el.textContent = subject;
+            card.classList.remove('hidden');
+        } else {
+            card.classList.add('hidden');
+        }
+    }
+
+    /**
+     * Display priority badge and reason
+     */
+    function showPriority(priority, reason) {
+        const badge = document.getElementById('priority-badge');
+        const reasonEl = document.getElementById('priority-reason');
+
+        badge.textContent = priority;
+        badge.className = 'priority-badge ' + priority.toLowerCase();
+        reasonEl.textContent = reason || '';
+
+        // Set the select to match
+        const select = document.getElementById('priority-select');
+        select.value = priority;
+    }
+
+    /**
+     * Show/hide follow-up questions
+     */
+    function showQuestions(questions) {
+        const section = document.getElementById('questions-section');
+        const noSection = document.getElementById('no-questions-section');
+        const container = document.getElementById('questions-container');
+
+        container.innerHTML = '';
+
+        if (questions && questions.length > 0) {
+            section.classList.remove('hidden');
+            noSection.classList.add('hidden');
+
+            questions.forEach((q, i) => {
+                const card = document.createElement('div');
+                card.className = 'question-card';
+                card.innerHTML = `
+                    <p class="question-text">${escapeHtml(q)} <span class="question-optional">(optional)</span></p>
+                    <textarea id="answer${i + 1}" name="answer${i + 1}" rows="3"
+                        placeholder="Your answer..." aria-label="Answer to: ${escapeHtml(q)}"></textarea>
+                `;
+                container.appendChild(card);
+            });
+        } else {
+            section.classList.add('hidden');
+            noSection.classList.remove('hidden');
+        }
+    }
+
+    /**
+     * Show the proxy contact section
+     */
+    function showProxy(detected) {
+        const section = document.getElementById('proxy-section');
+        if (detected) {
+            section.classList.remove('hidden');
+        } else {
+            section.classList.add('hidden');
+        }
+    }
+
+    /**
+     * Initialize the AI info modal
+     */
+    function initModal() {
+        const overlay = document.getElementById('ai-modal');
+        const openBtn = document.getElementById('ai-info-btn');
+        const closeBtns = overlay.querySelectorAll('.modal-close, .modal-close-btn');
+
+        function open() {
+            overlay.classList.remove('hidden');
+            overlay.querySelector('.modal-close').focus();
+        }
+
+        function close() {
+            overlay.classList.add('hidden');
+            openBtn.focus();
+        }
+
+        openBtn.addEventListener('click', open);
+        closeBtns.forEach(btn => btn.addEventListener('click', close));
+
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) close();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !overlay.classList.contains('hidden')) {
+                close();
+            }
+        });
+    }
+
+    /**
+     * Initialize priority confirm/adjust buttons
+     */
+    function initPriorityButtons() {
+        const confirmBtn = document.querySelector('[data-action="confirm"]');
+        const adjustBtn = document.querySelector('[data-action="adjust"]');
+        const adjustPanel = document.getElementById('priority-adjust');
+
+        confirmBtn.addEventListener('click', () => {
+            confirmBtn.classList.add('active');
+            adjustBtn.classList.remove('active');
+            adjustPanel.classList.add('hidden');
+        });
+
+        adjustBtn.addEventListener('click', () => {
+            adjustBtn.classList.add('active');
+            confirmBtn.classList.remove('active');
+            adjustPanel.classList.remove('hidden');
+        });
+    }
+
+    /**
+     * Get the user's final priority selection and confirmation status
+     */
+    function getFinalPriority(originalPriority) {
+        const adjustBtn = document.querySelector('[data-action="adjust"]');
+        const select = document.getElementById('priority-select');
+
+        if (adjustBtn.classList.contains('active')) {
+            return {
+                level: select.value,
+                confirmed: `Adjusted by user to ${select.value}`
+            };
+        }
+        return {
+            level: originalPriority,
+            confirmed: 'Confirmed by user'
+        };
+    }
+
+    /**
+     * Collect answers to follow-up questions
+     */
+    function getQuestionAnswers(questions) {
+        const result = { question1: '', answer1: '', question2: '', answer2: '' };
+        if (questions && questions.length > 0) {
+            questions.forEach((q, i) => {
+                const num = i + 1;
+                result[`question${num}`] = q;
+                const textarea = document.getElementById(`answer${num}`);
+                result[`answer${num}`] = textarea ? textarea.value.trim() : '';
+            });
+        }
+        return result;
+    }
+
+    /**
+     * Collect proxy user information
+     */
+    function getProxyInfo() {
+        const name = document.getElementById('actualUserName').value.trim();
+        const email = document.getElementById('actualUserEmail').value.trim();
+        const phone = document.getElementById('actualUserPhone').value.trim();
+        const company = document.getElementById('actualUserCompany').value.trim();
+
+        if (name || email || phone) {
+            return {
+                proxyInfo: `PROXY SUBMISSION - Impacted User: ${name}, Email: ${email}, Phone: ${phone}`,
+                actualUserName: name,
+                actualUserCompany: company,
+                actualUserEmail: email,
+                actualUserPhone: phone
+            };
+        }
+        return {
+            proxyInfo: '',
+            actualUserName: '',
+            actualUserCompany: '',
+            actualUserEmail: '',
+            actualUserPhone: ''
+        };
+    }
+
+    /**
+     * Show the confirmation stage with the user's name
+     */
+    function showConfirmation(name) {
+        const firstName = name.split(' ')[0];
+        document.getElementById('confirm-name').textContent = firstName;
+        showStage('stage-confirm');
+    }
+
+    /**
+     * Escape HTML to prevent XSS in dynamic content
+     */
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    // Public API
+    return {
+        showStage,
+        setButtonLoading,
+        populateSummary,
+        showSubject,
+        showPriority,
+        showQuestions,
+        showProxy,
+        showConfirmation,
+        initModal,
+        initPriorityButtons,
+        getFinalPriority,
+        getQuestionAnswers,
+        getProxyInfo,
+    };
+})();

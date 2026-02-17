@@ -1,590 +1,248 @@
-// Form handling module - validation, navigation, and submission
+/**
+ * Form Handler — validation, stage navigation, and ticket submission
+ */
+const FormHandler = (() => {
+    'use strict';
 
-// Cache for configuration to avoid repeated network requests
-let cachedConfig = null;
+    // Current AI analysis result (set after "Next" is clicked)
+    let currentAnalysis = null;
 
-function handleFileUpload(e) {
-    const file = e.target.files[0];
-    if (file) {
-        // Get DOM elements
-        const filePreview = document.getElementById('filePreview');
-        const fileName = document.getElementById('fileName');
-        const imagePreview = document.getElementById('imagePreview');
-        const base64Input = document.getElementById('screenshotBase64');
-        
-        // Validate DOM elements exist
-        if (!filePreview || !fileName || !imagePreview || !base64Input) {
-            console.error('Required DOM elements for file upload not found');
-            return;
-        }
-        
-        // Set file name
-        fileName.textContent = file.name;
-        
-        // Use single FileReader instance for both preview and base64 conversion
-        const reader = new FileReader();
-        
-        reader.onload = function(evt) {
-            try {
-                // Set image preview
-                imagePreview.src = evt.target.result;
-                filePreview.classList.add('show');
-                
-                // Extract base64 from the same result (more efficient)
-                const base64 = evt.target.result.split(',')[1];
-                base64Input.value = base64;
-                
-                console.log('File uploaded successfully:', file.name);
-            } catch (error) {
-                console.error('Error processing file result:', error);
-                // Cleanup on error
-                base64Input.value = '';
-                filePreview.classList.remove('show');
-            }
-        };
-        
-        reader.onerror = function() {
-            console.error('Error reading file:', file.name);
-            // Cleanup on error
-            base64Input.value = '';
-            filePreview.classList.remove('show');
-            fileName.textContent = '';
-        };
-        
-        reader.onabort = function() {
-            console.warn('File reading was aborted:', file.name);
-            // Cleanup on abort
-            base64Input.value = '';
-            filePreview.classList.remove('show');
-            fileName.textContent = '';
-        };
-        
-        // Start reading the file
-        reader.readAsDataURL(file);
-        
-        // Cleanup: clear reference after use to allow garbage collection
-        reader.onloadend = function() {
-            // Clear the reference after processing is complete
-            reader.onload = null;
-            reader.onerror = null;
-            reader.onabort = null;
-            reader.onloadend = null;
-        };
-    }
-}
+    /**
+     * Validate the intake form. Returns true if valid.
+     */
+    function validateForm() {
+        let valid = true;
+        const fields = [
+            { id: 'fullName', message: 'Please enter your full name' },
+            { id: 'companyName', message: 'Please enter your company name' },
+            { id: 'email', message: 'Please enter a valid email address' },
+            { id: 'phone', message: 'Please enter your phone number' },
+            { id: 'notes', message: 'Please describe your issue' },
+        ];
 
-function removeFile() {
-    // Get DOM elements
-    const screenshotInput = document.getElementById('screenshot');
-    const filePreview = document.getElementById('filePreview');
-    const base64Input = document.getElementById('screenshotBase64');
-    const fileName = document.getElementById('fileName');
-    const imagePreview = document.getElementById('imagePreview');
-    
-    // Clear file input
-    if (screenshotInput) {
-        screenshotInput.value = '';
-    }
-    
-    // Hide preview
-    if (filePreview) {
-        filePreview.classList.remove('show');
-    }
-    
-    // Clear base64 data
-    if (base64Input) {
-        base64Input.value = '';
-    }
-    
-    // Clear file name and image preview
-    if (fileName) {
-        fileName.textContent = '';
-    }
-    
-    if (imagePreview) {
-        imagePreview.src = '';
-    }
-    
-    console.log('File removed successfully');
-}
+        fields.forEach(({ id, message }) => {
+            const input = document.getElementById(id);
+            const error = document.getElementById(`${id}-error`);
+            const value = input.value.trim();
 
-function handleNextButton(event) {
-    // Validate required fields
-    if (!document.getElementById('ticketForm').checkValidity()) {
-        alert('Please fill in all required fields.');
-        return;
-    }
-    
-    // Capture AI review state and content
-    captureAIReviewData();
-    
-    // Show loading state on button
-    const nextBtn = event.currentTarget;
-    const originalText = nextBtn.textContent;
-    nextBtn.textContent = 'Processing...';
-    nextBtn.disabled = true;
-    
-    // Show summary page
-    showSummaryPage();
-    
-    // Reset button after a short delay
-    setTimeout(() => {
-        nextBtn.textContent = originalText;
-        nextBtn.disabled = false;
-    }, 2000);
-}
-
-function handleBackToEdit() {
-    // Hide summary page and show form, alert, and sample data section
-    document.getElementById('summaryPage').style.display = 'none';
-    document.querySelector('form').style.display = 'block';
-    document.querySelector('.alert').style.display = 'block';
-    document.querySelector('.sample-data-section').style.display = 'block';
-    
-    // Hide confirmed urgency section when going back to edit
-    const confirmedUrgencySection = document.getElementById('confirmedUrgencySection');
-    if (confirmedUrgencySection) {
-        confirmedUrgencySection.style.display = 'none';
-    }
-}
-
-async function handleSubmitTicket() {
-    // Capture AI questions and answers
-    captureAIQuestionsAndAnswers();
-    
-    // Ensure URL parameters are captured in hidden fields before submission
-    const urlParams = new URLSearchParams(window.location.search);
-    const computerName = urlParams.get('computer');
-    const userName = urlParams.get('user');
-    
-    if (computerName) {
-        document.getElementById('computerNameHidden').value = computerName;
-        console.log('Computer name set before submission:', computerName);
-    }
-    
-    if (userName) {
-        document.getElementById('userNameHidden').value = userName;
-        console.log('User name set before submission:', userName);
-    }
-    
-    // Submit the form to the webhook
-    const form = document.getElementById('ticketForm');
-    if (form) {
-        console.log('Submitting form to webhook...');
-        
-        // Show loading state
-        const submitBtn = document.getElementById('submitTicketBtn');
-        if (!submitBtn) {
-            console.error('Submit button not found!');
-            return;
-        }
-        
-        const originalText = submitBtn.textContent;
-        submitBtn.textContent = 'Submitting...';
-        submitBtn.disabled = true;
-        
-        // Debug: Log all form data before submission
-        const formData = new FormData(form);
-        
-        // Ensure all required fields have values
-        const requiredFields = ['fullName', 'companyName', 'email', 'phone', 'notes'];
-        requiredFields.forEach(field => {
-            const fieldValue = formData.get(field);
-            if (!fieldValue) {
-                console.warn(`Required field ${field} is empty`);
-            }
-        });
-        
-        console.log('Form data being submitted:');
-        for (let [key, value] of formData.entries()) {
-            console.log(`${key}: ${value}`);
-        }
-        
-        // Log the total number of form fields
-        console.log(`Total form fields: ${formData.entries().length}`);
-        
-        // Submit the form to hidden iframe (avoids CORS issues)
-        console.log('Submitting form to hidden iframe...');
-        
-        // Add a listener to the iframe to detect when submission completes
-        const iframe = document.querySelector('iframe[name="hiddenSubmitFrame"]');
-        console.log('Iframe found:', !!iframe);
-        
-        // Set up fallback timeout for button reset
-        const fallbackTimeout = setTimeout(() => {
-            console.log('Fallback timeout triggered - resetting submit button');
-            submitBtn.textContent = originalText;
-            submitBtn.disabled = false;
-            showTempMessage('Form submission completed (fallback)');
-        }, 3000);
-        
-        if (iframe) {
-            // Test if iframe is accessible
-            try {
-                iframe.onload = function() {
-                    console.log('Form submission completed via iframe');
-                    console.log('Iframe content:', iframe.contentDocument?.body?.innerHTML || 'No content');
-                    // Clear fallback timeout since iframe event fired
-                    clearTimeout(fallbackTimeout);
-                    // Reset button
-                    submitBtn.textContent = originalText;
-                    submitBtn.disabled = false;
-                };
-                
-                iframe.onerror = function() {
-                    console.error('Form submission failed via iframe');
-                    // Clear fallback timeout since iframe event fired
-                    clearTimeout(fallbackTimeout);
-                    // Reset button
-                    submitBtn.textContent = originalText;
-                    submitBtn.disabled = false;
-                };
-            } catch (e) {
-                console.error('Error setting up iframe listeners:', e);
-                // If iframe setup fails, clear timeout and reset button immediately
-                clearTimeout(fallbackTimeout);
-                submitBtn.textContent = originalText;
-                submitBtn.disabled = false;
-            }
-        } else {
-            console.error('Hidden iframe not found!');
-            // If no iframe, clear timeout and reset button immediately
-            clearTimeout(fallbackTimeout);
-            submitBtn.textContent = originalText;
-            submitBtn.disabled = false;
-        }
-        
-        // Get the webhook URL from the configuration endpoint (with caching)
-        let config;
-        
-        if (cachedConfig) {
-            // Use cached configuration
-            config = cachedConfig;
-            console.log('Using cached webhook URL:', config.webhookUrl);
-        } else {
-            // Fetch configuration if not cached
-            try {
-                const response = await fetch('get-config.php');
-                
-                // Check if the response is successful
-                if (!response.ok) {
-                    console.error('Failed to load config:', response.status, response.statusText);
-                    showTempMessage('Error: Failed to load configuration');
-                    submitBtn.textContent = originalText;
-                    submitBtn.disabled = false;
-                    return;
-                }
-                
-                config = await response.json();
-                
-                // Validate that config is an object and has webhookUrl
-                if (!config || typeof config !== 'object' || !config.webhookUrl) {
-                    console.error('Invalid configuration or missing webhook URL');
-                    showTempMessage('Error: Invalid configuration');
-                    submitBtn.textContent = originalText;
-                    submitBtn.disabled = false;
-                    return;
-                }
-                
-                // Cache the configuration for future use
-                cachedConfig = config;
-                console.log('Webhook URL loaded and cached:', config.webhookUrl);
-            } catch (error) {
-                console.error('Error loading webhook configuration:', error);
-                showTempMessage('Error: Failed to load configuration');
-                submitBtn.textContent = originalText;
-                submitBtn.disabled = false;
+            // Special validation for email
+            if (id === 'email' && value && !isValidEmail(value)) {
+                input.classList.add('error');
+                error.textContent = 'Please enter a valid email address';
+                valid = false;
                 return;
             }
-        }
-        
-        form.action = config.webhookUrl;
-            
-            // Validate all required form fields before submission
-            const missingFields = [];
-            
-            for (const field of requiredFields) {
-                const fieldValue = formData.get(field);
-                if (!fieldValue || fieldValue.trim() === '') {
-                    missingFields.push(field);
-                }
-            }
-            
-            if (missingFields.length > 0) {
-                const fieldNames = missingFields.map(field => {
-                    switch(field) {
-                        case 'fullName': return 'Full Name';
-                        case 'companyName': return 'Company Name';
-                        case 'email': return 'Email';
-                        case 'phone': return 'Phone';
-                        case 'notes': return 'Issue Description';
-                        default: return field;
-                    }
-                }).join(', ');
-                
-                showTempMessage(`Please fill in the required fields: ${fieldNames}`);
-                submitBtn.textContent = originalText;
-                submitBtn.disabled = false;
-                return;
-            }
-            
-            // All validation passed, submit the form using proper event dispatching
-            const submitEvent = new Event('submit', { cancelable: true });
-            if (form.dispatchEvent(submitEvent)) {
-                // If no preventDefault was called, proceed with submission
-                form.submit();
+
+            if (!value) {
+                input.classList.add('error');
+                error.textContent = message;
+                valid = false;
             } else {
-                console.log('Form submission was prevented by event listeners');
-                // Reset button state since submission was prevented
-                submitBtn.textContent = originalText;
-                submitBtn.disabled = false;
+                input.classList.remove('error');
+                error.textContent = '';
             }
-        
+        });
 
-        
-        // Hide summary page and show confirmation
-        const summaryPage = document.getElementById('summaryPage');
-        if (summaryPage) {
-            summaryPage.style.display = 'none';
+        // Focus the first error field
+        if (!valid) {
+            const firstError = document.querySelector('input.error, textarea.error');
+            if (firstError) firstError.focus();
         }
-        
-        // Hide confirmed urgency section when submitting
-        const confirmedUrgencySection = document.getElementById('confirmedUrgencySection');
-        if (confirmedUrgencySection) {
-            confirmedUrgencySection.style.display = 'none';
-        }
-        
-        // Show confirmation message
-        const confirmationMessage = document.getElementById('confirmationMessage');
-        if (confirmationMessage) {
-            confirmationMessage.classList.add('show');
-            
-            // Update confirmation details
-            const userEmail = document.getElementById('email')?.value || '';
-            const userName = document.getElementById('fullName')?.value || '';
-            
-            const confirmEmail = document.getElementById('confirmEmail');
-            if (confirmEmail) {
-                confirmEmail.textContent = userEmail;
-            }
-            
-            // Update the thank you message with name
-            const thankYouHeading = confirmationMessage.querySelector('h2');
-            if (thankYouHeading) {
-                thankYouHeading.textContent = `Thank You, ${userName}!`;
-            }
-        }
-        
-        // Scroll to top
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth'
-        });
-    } else {
-        console.error('Form not found!');
-        showTempMessage('Error: Form not found');
-    }
-}
 
-function showSummaryPage() {
-    try {
-        console.log('showSummaryPage called');
-        
-        // Populate summary
-        const summaryName = document.getElementById('summaryName');
-        const summaryCompany = document.getElementById('summaryCompany');
-        const summaryEmail = document.getElementById('summaryEmail');
-        const summaryPhone = document.getElementById('summaryPhone');
-        const summaryNotes = document.getElementById('summaryNotes');
-        
-        console.log('Summary elements found:', {
-            summaryName: !!summaryName,
-            summaryCompany: !!summaryCompany,
-            summaryEmail: !!summaryEmail,
-            summaryPhone: !!summaryPhone,
-            summaryNotes: !!summaryNotes
-        });
-        
-        if (summaryName && summaryCompany && summaryEmail && summaryPhone && summaryNotes) {
-            summaryName.textContent = document.getElementById('fullName').value;
-            summaryCompany.textContent = document.getElementById('companyName').value;
-            summaryEmail.textContent = document.getElementById('email').value;
-            summaryPhone.textContent = document.getElementById('phone').value;
-            summaryNotes.textContent = document.getElementById('notes').value;
-        }
-        
-        // Display URL parameters if they exist
-        const computerName = document.getElementById('computerNameHidden').value;
-        const userName = document.getElementById('userNameHidden').value;
-        const computerDisplay = document.getElementById('computerDisplay');
-        const computerText = document.getElementById('computerText');
-        const userDisplay = document.getElementById('userDisplay');
-        const userText = document.getElementById('userText');
-        
-        if (computerName && computerDisplay && computerText) {
-            computerText.textContent = computerName;
-            computerDisplay.style.display = 'block';
-        } else if (computerDisplay) {
-            computerDisplay.style.display = 'none';
-        }
-        
-        if (userName && userDisplay && userText) {
-            userText.textContent = userName;
-            userDisplay.style.display = 'block';
-        } else if (userDisplay) {
-            userDisplay.style.display = 'none';
-        }
-        
-        // Hide form, alert, and sample data section, then show summary
-        const form = document.querySelector('form');
-        const alert = document.querySelector('.alert');
-        const sampleDataSection = document.querySelector('.sample-data-section');
-        const summaryPage = document.getElementById('summaryPage');
-        
-        console.log('Elements to hide/show:', {
-            form: !!form,
-            alert: !!alert,
-            sampleDataSection: !!sampleDataSection,
-            summaryPage: !!summaryPage
-        });
-        
-        if (form) form.style.display = 'none';
-        if (alert) alert.style.display = 'none';
-        if (sampleDataSection) sampleDataSection.style.display = 'none';
-        if (summaryPage) summaryPage.style.display = 'block';
-        
-        // Generate AI questions and subject only if AI review is enabled
-        const aiReviewEnabled = isAIReviewEnabled();
-        console.log('showSummaryPage - AI Review enabled:', aiReviewEnabled);
-        
-        if (aiReviewEnabled) {
-            console.log('Generating AI questions...');
-            generateFollowUpQuestions(document.getElementById('notes').value);
-        } else {
-            console.log('AI review disabled - showing simple confirmation...');
-            // Show simple confirmation without AI features
-            showSimpleConfirmation();
-        }
-        
-        // Hide any previously confirmed urgency sections
-        const confirmedUrgencySection = document.getElementById('confirmedUrgencySection');
-        if (confirmedUrgencySection) {
-            confirmedUrgencySection.style.display = 'none';
-        }
-        
-        // Scroll to top
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth'
-        });
-    } catch (error) {
-        console.error('Error in showSummaryPage:', error);
-        // Fallback: just show the summary page
-        const summaryPage = document.getElementById('summaryPage');
-        if (summaryPage) summaryPage.style.display = 'block';
+        return valid;
     }
-}
 
-function captureAIQuestionsAndAnswers() {
-    const questionsHidden = document.getElementById('aiQuestionsHidden');
-    const answersHidden = document.getElementById('aiAnswersHidden');
-    
-    // If AI review is disabled, use simple values
-    if (!isAIReviewEnabled()) {
-        questionsHidden.value = 'No AI questions generated - AI review disabled';
-        answersHidden.value = 'No answers provided - AI review disabled';
-        document.getElementById('urgencyHidden').value = 'MEDIUM: Standard support request';
-        
-        // Set default urgency confirmation for non-AI submissions
-        const urgencyConfirmedHidden = document.getElementById('urgencyConfirmedHidden');
-        if (!urgencyConfirmedHidden.value) {
-            urgencyConfirmedHidden.value = 'Standard priority (AI review disabled)';
-            console.log('Setting default urgency confirmation for non-AI submission');
-        }
-        
-        console.log('AI review disabled - using default values for submission');
-        return;
+    function isValidEmail(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     }
-    
-    // Check if we're on the summary page
-    const summaryQuestionsContent = document.getElementById('summaryQuestionsContent');
-    const summaryAnswersContainer = document.getElementById('summaryAnswersContainer');
-    
-    if (summaryQuestionsContent && summaryQuestionsContent.innerHTML.trim()) {
-        // We're on the summary page with questions
-        const questionsText = summaryQuestionsContent.innerText;
-        const answerInputs = summaryAnswersContainer.querySelectorAll('textarea');
-        
-        // Capture questions
-        questionsHidden.value = questionsText;
-        
-        // Capture answers
-        const answers = [];
-        answerInputs.forEach((input, index) => {
-            if (input.value.trim()) {
-                answers.push(`Question ${index + 1}: ${input.value.trim()}`);
-            }
-        });
-        
-        answersHidden.value = answers.join('\n');
-        
-        // Urgency and impact are already captured in hidden fields when AI generates questions
-        console.log('Urgency level captured:', document.getElementById('urgencyHidden').value);
-        
-        // Set default urgency confirmation if user didn't explicitly respond
-        const urgencyConfirmedHidden = document.getElementById('urgencyConfirmedHidden');
-        if (!urgencyConfirmedHidden.value) {
-            urgencyConfirmedHidden.value = 'Accepted by default (no explicit response)';
-            console.log('Setting default urgency confirmation: Accepted by default');
-        }
-        
-        // Log URL parameters if they exist
-        const computerName = document.getElementById('computerNameHidden').value;
-        const userName = document.getElementById('userNameHidden').value;
-        if (computerName || userName) {
-            console.log('URL parameters captured:', {
-                computer: computerName,
-                user: userName
+
+    /**
+     * Clear validation errors on input
+     */
+    function initLiveValidation() {
+        const fields = ['fullName', 'companyName', 'email', 'phone', 'notes'];
+        fields.forEach(id => {
+            const input = document.getElementById(id);
+            input.addEventListener('input', () => {
+                input.classList.remove('error');
+                document.getElementById(`${id}-error`).textContent = '';
             });
-        }
-        
-        // Debug: Log all hidden field values before submission
-        console.log('All hidden field values before submission:', {
-            computerName: document.getElementById('computerNameHidden').value,
-            userName: document.getElementById('userNameHidden').value,
-            aiQuestions: document.getElementById('aiQuestionsHidden').value,
-            aiAnswers: document.getElementById('aiAnswersHidden').value,
-            urgency: document.getElementById('urgencyHidden').value
         });
-        
-        // Capture proxy contact information if available
-        const proxyContactSection = document.getElementById('proxyContactSection');
-        if (proxyContactSection && proxyContactSection.style.display !== 'none') {
-            const actualUserName = document.getElementById('actualUserName').value;
-            const actualUserEmail = document.getElementById('actualUserEmail').value;
-            const actualUserPhone = document.getElementById('actualUserPhone').value;
-            
-            // Populate hidden fields for webhook submission
-            document.getElementById('actualUserNameHidden').value = actualUserName;
-            document.getElementById('actualUserEmailHidden').value = actualUserEmail;
-            document.getElementById('actualUserPhoneHidden').value = actualUserPhone;
-            
-            if (actualUserName && actualUserEmail && actualUserPhone) {
-                const proxyInfo = `PROXY SUBMISSION - Impacted User: ${actualUserName}, Email: ${actualUserEmail}, Phone: ${actualUserPhone}`;
-                document.getElementById('aiQuestionsHidden').value += '\n\n' + proxyInfo;
+    }
+
+    /**
+     * Gather form data from the intake form
+     */
+    function getFormData() {
+        return {
+            fullName: document.getElementById('fullName').value.trim(),
+            companyName: document.getElementById('companyName').value.trim(),
+            email: document.getElementById('email').value.trim(),
+            phone: document.getElementById('phone').value.trim(),
+            notes: document.getElementById('notes').value.trim(),
+            computerName: document.getElementById('computerName').value,
+            userName: document.getElementById('userName').value,
+            aiReviewEnabled: document.getElementById('aiReviewEnabled').checked,
+        };
+    }
+
+    /**
+     * Handle the "Next" button click.
+     * Validates, optionally calls AI, then transitions to summary stage.
+     */
+    async function handleNext() {
+        if (!validateForm()) return;
+
+        const formData = getFormData();
+        const nextBtn = document.getElementById('btn-next');
+
+        UIManager.setButtonLoading(nextBtn, true);
+
+        try {
+            if (formData.aiReviewEnabled) {
+                // Call AI for analysis
+                currentAnalysis = await AIIntegration.analyzeIssue(formData.notes);
+            } else {
+                // Skip AI — use defaults
+                currentAnalysis = AIIntegration.getDefaultResponse();
             }
-        }
-    } else {
-        // No questions generated
-        questionsHidden.value = 'No AI questions generated';
-        answersHidden.value = 'No answers provided';
-        document.getElementById('urgencyHidden').value = 'MEDIUM: Standard support request';
-        
-        // Set default urgency confirmation when no questions are generated
-        const urgencyConfirmedHidden = document.getElementById('urgencyConfirmedHidden');
-        if (!urgencyConfirmedHidden.value) {
-            urgencyConfirmedHidden.value = 'Standard priority (no AI questions)';
-            console.log('Setting default urgency confirmation when no questions generated');
+
+            // Populate the summary stage
+            UIManager.populateSummary(formData);
+            UIManager.showSubject(currentAnalysis.subject);
+            UIManager.showPriority(currentAnalysis.priority, currentAnalysis.reason);
+            UIManager.showQuestions(currentAnalysis.questions);
+            UIManager.showProxy(currentAnalysis.proxy_detected);
+
+            // Show/hide subject card based on AI
+            if (!formData.aiReviewEnabled) {
+                document.getElementById('subject-card').classList.add('hidden');
+                document.getElementById('priority-card').classList.add('hidden');
+                document.getElementById('no-questions-section').classList.remove('hidden');
+            } else {
+                document.getElementById('priority-card').classList.remove('hidden');
+            }
+
+            UIManager.showStage('stage-summary');
+
+        } catch (error) {
+            console.error('Error during Next:', error);
+            // Graceful degradation — show summary with defaults
+            currentAnalysis = AIIntegration.getDefaultResponse();
+            UIManager.populateSummary(formData);
+            UIManager.showSubject('');
+            UIManager.showPriority('Normal', 'Standard support request');
+            UIManager.showQuestions([]);
+            UIManager.showProxy(false);
+            UIManager.showStage('stage-summary');
+        } finally {
+            UIManager.setButtonLoading(nextBtn, false);
         }
     }
-}
+
+    /**
+     * Handle the "Back to Edit" button
+     */
+    function handleBack() {
+        UIManager.showStage('stage-form');
+    }
+
+    /**
+     * Handle the "Submit Ticket" button.
+     * Gathers all data and sends to the Rewst webhook via PHP backend.
+     */
+    async function handleSubmit() {
+        const submitBtn = document.getElementById('btn-submit');
+        UIManager.setButtonLoading(submitBtn, true);
+
+        try {
+            const formData = getFormData();
+
+            // Determine final priority
+            let priorityInfo;
+            if (formData.aiReviewEnabled && currentAnalysis) {
+                priorityInfo = UIManager.getFinalPriority(currentAnalysis.priority);
+            } else {
+                priorityInfo = {
+                    level: 'Normal',
+                    confirmed: 'Standard priority (AI review disabled)'
+                };
+            }
+
+            // Build urgency level string
+            const urgencyLevel = `${priorityInfo.level}: ${currentAnalysis ? currentAnalysis.reason : 'Standard support request'}`;
+
+            // Collect question answers
+            const qa = UIManager.getQuestionAnswers(
+                currentAnalysis ? currentAnalysis.questions : []
+            );
+
+            // Collect proxy info
+            const proxyData = currentAnalysis && currentAnalysis.proxy_detected
+                ? UIManager.getProxyInfo()
+                : { proxyInfo: '', actualUserName: '', actualUserCompany: '', actualUserEmail: '', actualUserPhone: '' };
+
+            // Build the full payload
+            const payload = {
+                fullName: formData.fullName,
+                companyName: formData.companyName,
+                email: formData.email,
+                phone: formData.phone,
+                notes: formData.notes,
+
+                formType: 'Support_Ticket',
+                submissionDate: new Date().toISOString(),
+                generatedSubject: currentAnalysis ? currentAnalysis.subject : '',
+                screenshotBase64: '',
+
+                question1: qa.question1,
+                answer1: qa.answer1,
+                question2: qa.question2,
+                answer2: qa.answer2,
+
+                urgencyLevel: urgencyLevel,
+                urgencyConfirmed: priorityInfo.confirmed,
+
+                computerName: formData.computerName,
+                userName: formData.userName,
+
+                aiReviewEnabled: formData.aiReviewEnabled ? 'true' : 'false',
+                aiReviewContent: formData.aiReviewEnabled ? formData.notes : '',
+
+                proxyInfo: proxyData.proxyInfo,
+                actualUserName: proxyData.actualUserName,
+                actualUserCompany: proxyData.actualUserCompany,
+                actualUserEmail: proxyData.actualUserEmail,
+                actualUserPhone: proxyData.actualUserPhone,
+            };
+
+            // Send to backend
+            const response = await fetch('/submit-ticket.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error(`Submission failed: ${response.status}`);
+            }
+
+            // Success — show confirmation
+            UIManager.showConfirmation(formData.fullName);
+
+        } catch (error) {
+            console.error('Submission error:', error);
+            alert('There was an issue submitting your ticket. Please try again, or call us at 866.933.4359 for immediate help.');
+        } finally {
+            UIManager.setButtonLoading(submitBtn, false);
+        }
+    }
+
+    // Public API
+    return {
+        handleNext,
+        handleBack,
+        handleSubmit,
+        initLiveValidation,
+    };
+})();
