@@ -64,7 +64,43 @@ const FormHandler = (() => {
     }
 
     /**
+     * Common personal email domains that should trigger a work-email nudge.
+     * @type {Set<string>}
+     */
+    const PERSONAL_DOMAINS = new Set([
+        'gmail.com', 'yahoo.com', 'yahoo.co.uk', 'hotmail.com', 'hotmail.co.uk',
+        'outlook.com', 'live.com', 'aol.com', 'icloud.com', 'me.com', 'mac.com',
+        'msn.com', 'protonmail.com', 'proton.me', 'mail.com', 'zoho.com',
+        'ymail.com', 'comcast.net', 'att.net', 'sbcglobal.net', 'verizon.net',
+        'cox.net', 'charter.net', 'earthlink.net', 'optonline.net',
+    ]);
+
+    /** @type {boolean} Whether the user dismissed the email domain warning */
+    let emailWarningDismissed = false;
+
+    /**
+     * Check if an email uses a personal domain and show/hide the warning.
+     * Respects the user's dismiss action — won't re-show for the same session
+     * unless the domain changes to a different personal domain.
+     * @param {string} email - The email address to check
+     */
+    function checkEmailDomain(email) {
+        const warning = document.getElementById('email-domain-warning');
+        if (!email || !email.includes('@')) {
+            warning.classList.add('hidden');
+            return;
+        }
+        const domain = email.split('@')[1].toLowerCase();
+        if (PERSONAL_DOMAINS.has(domain) && !emailWarningDismissed) {
+            warning.classList.remove('hidden');
+        } else {
+            warning.classList.add('hidden');
+        }
+    }
+
+    /**
      * Attach input event listeners to clear validation errors as the user types.
+     * Also sets up the personal email domain warning on the email field.
      */
     function initLiveValidation() {
         const fields = ['fullName', 'companyName', 'email', 'phone', 'notes'];
@@ -74,6 +110,22 @@ const FormHandler = (() => {
                 input.classList.remove('error');
                 document.getElementById(`${id}-error`).textContent = '';
             });
+        });
+
+        // Email domain check — triggers on blur and input
+        const emailInput = document.getElementById('email');
+        emailInput.addEventListener('blur', () => checkEmailDomain(emailInput.value.trim()));
+        emailInput.addEventListener('input', () => {
+            // Re-check on input so the warning hides when they correct the domain
+            if (!document.getElementById('email-domain-warning').classList.contains('hidden')) {
+                checkEmailDomain(emailInput.value.trim());
+            }
+        });
+
+        // Dismiss button — hides warning for this session
+        document.getElementById('email-warning-dismiss').addEventListener('click', () => {
+            emailWarningDismissed = true;
+            document.getElementById('email-domain-warning').classList.add('hidden');
         });
     }
 
