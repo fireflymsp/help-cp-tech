@@ -5,8 +5,17 @@
  * Backend endpoint that receives the complete ticket data from the frontend
  * and forwards it to the Rewst webhook as FormData (application/x-www-form-urlencoded).
  *
+ * Also fires the same payload at a second, shadow Rewst webhook (WEBHOOK_URL_SHADOW)
+ * that verifies a ticket actually landed in the PSA and creates one itself if the
+ * primary webhook silently failed to. This is independent of the primary send below —
+ * it fires even if the primary call errors — and never affects the response returned
+ * to the browser; the shadow workflow acks immediately and does its verification work
+ * asynchronously.
+ *
  * Environment Variables Required:
- *   WEBHOOK_URL — The Rewst webhook endpoint URL
+ *   WEBHOOK_URL        — The primary Rewst webhook endpoint URL
+ *   WEBHOOK_URL_SHADOW — The shadow/fallback Rewst webhook endpoint URL (optional; if
+ *                        unset, shadow verification is simply skipped)
  */
 
 header('Content-Type: application/json');
@@ -96,6 +105,12 @@ if (!empty($api_key)) {
 // Send to Rewst as application/x-www-form-urlencoded (NOT JSON — Rewst double-encodes JSON)
 $post_body = http_build_query($payload);
 
+// Fire the shadow verification webhook first, best-effort. It always attempts to send
+// regardless of what happens to the primary call below, and never affects this
+// endpoint's response — the shadow workflow acks in milliseconds (async trigger) and
+// does its 120s verify-then-remediate work on Rewst's side, not on this request.
+sendShadowWebhook($post_body);
+
 $ch = curl_init($webhook_url);
 curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER => true,
@@ -130,6 +145,48 @@ if ($http_code < 200 || $http_code >= 300) {
 
 // Success
 echo json_encode(['success' => true, 'message' => 'Ticket submitted successfully']);
+
+// --- Shadow Webhook (best-effort, never affects the response to the browser) ---
+
+/**
+ * Fire-and-forget POST of the same payload to the shadow verification webhook.
+ * Short timeouts since that webhook acks immediately (async trigger) rather than
+ * waiting for its own multi-minute verify/remediate run. Any failure is logged and
+ * swallowed — this must never change $http_code or the JSON returned above.
+ *
+ * @param string $post_body Already-encoded application/x-www-form-urlencoded body
+ */
+function sendShadowWebhook(string $post_body): void {
+    $shadow_url = getenv('WEBHOOK_URL_SHADOW');
+    if (empty($shadow_url)) {
+        return;
+    }
+
+    $ch = curl_init($shadow_url);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST           => true,
+        CURLOPT_POSTFIELDS     => $post_body,
+        CURLOPT_HTTPHEADER     => [
+            'Content-Type: application/x-www-form-urlencoded',
+        ],
+        CURLOPT_TIMEOUT        => 8,
+        CURLOPT_CONNECTTIMEOUT => 3,
+    ]);
+
+    $response = curl_exec($ch);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curl_error = curl_error($ch);
+    curl_close($ch);
+
+    if ($response === false || !empty($curl_error)) {
+        error_log('CPHELP: Shadow webhook cURL error (non-fatal) — ' . $curl_error);
+        return;
+    }
+    if ($http_code < 200 || $http_code >= 300) {
+        error_log('CPHELP: Shadow webhook returned HTTP ' . $http_code . ' (non-fatal) — ' . substr($response, 0, 300));
+    }
+}
 
 // --- Spam Detection Function ---
 
